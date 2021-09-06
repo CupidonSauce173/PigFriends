@@ -1,0 +1,30 @@
+# Config for the friends command.
+
+# MySQL server config
+mysql-data:
+  user: sqlUser
+  password: sqlPassword
+  database: Minecraft
+  port: 3306
+  ip: 127.0.0.1
+
+command-main: friends
+command-aliases:
+  - fr
+  - friend
+
+# Note that whatever permission you put "FriendsSystem." will always be at the beginning.
+# In this example, the permission will be FriendsSystem.permission.friends.
+permission: permission.friends
+
+# true = use a permission, false = don't use a permission.
+use-permission: true
+
+# The limit of friends that someone can have.
+friend-limit: 10
+
+# The amount of friends per page (message / UI)
+friend-per-page: 10
+
+# Request check delay (in seconds)
+request-check-time: 2
