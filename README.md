@@ -7,7 +7,7 @@
 
 ### Known Issues
 
-- **No code has been published yet, the plugin isn't finished yet and won't be for some time since I am quite busy.**
+- **Not ready to be used, I didn't even put it in a testing server yet, I didn't finish to write everything I want before starting debugging and fixing all that mess of a code lol**
 
 | **Feature**                 | **State** | 
 | --------------------------- |:----------:|
