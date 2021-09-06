@@ -154,9 +154,6 @@ public function onEnable(){
 Then, you can use the API like you wish.
 
 ```php
-# Get & translate the langKeys to readable messages.
-$api->getText('some.lang.key'); # Example without any arguments.
-$api->getText('some.lang.key.args', ['arg.1' => $args[1], 'arg.2' => $args[2]]); # Example with arguments.
 
 # Get FriendPlayer object by name.
 $api->getFriendPlayerByName($target); # Returns FriendPlayer or null (if didn't find anyone with that name online).
@@ -183,6 +180,26 @@ When the server starts, it will schedule a repeating task (with a timer that you
 | /f favorite unset (target) | Unset a friend as favorite.
 | /f list (page) | Opens a list of your friends (chat message).
 | /f help | Opens an UI with all the explaination on how the plugin works.
+
+### MultiFunctionThread Class
+
+This class is the multi-thread base of the plugin, it will take case of creating / deleting requests, remove friends, add / remove favorites and pretty much everything that is related to MySQL. You can also send over your custom queries via MultiFunctionThread::CUSTOM_QUERY (note that you will need to supply in the $inputs the query (args[0]) and the other data if necessary (args[1]). Here is an example of how to call the CUSTOM_QUERY function.
+
+```php
+$inputs = [
+    'SELECT id FROM FriendRequests WHERE player = ?',
+    ['player' => $friend],
+    $dbInfo
+];
+$multiFunctionThread = new MultiFunctionThread(MultiFunctionThread::CUSTOM_QUERY, $inputs);
+$multiFunctionThread->Start() && $multiFunctionThread->Join();
+```
+
+Note that this will never return something, so don't try to select things, only insert, delete or modify as you need.
+
+### Translation Class
+
+Simple class to translate messages from the langKeys.ini. You can call it via Translation::Translate($messageIndex, $keys); Will return null or a string.
 
 ### Future features
 
