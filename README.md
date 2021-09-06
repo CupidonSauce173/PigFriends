@@ -7,7 +7,7 @@
 
 ### Known Issues
 
-- none
+- **No code has been published yet, the plugin isn't finished yet and won't be for some time since I am quite busy.**
 
 | **Feature**                 | **State** | 
 | --------------------------- |:----------:|
