@@ -12,7 +12,7 @@
 | **Feature**                 | **State** | 
 | --------------------------- |:----------:|
 | MultiThreaded System        | 🧰 |
-| FriendPlayer Object         | 🧰 |
+| Friend Object         | 🧰 |
 | Request Object              | 🧰 |
 | Simple API                  | 🧰 |
 | Translation System          | 🧰 |
