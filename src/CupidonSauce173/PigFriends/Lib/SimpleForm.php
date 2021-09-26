@@ -11,7 +11,7 @@ class SimpleForm extends Form
     private array $labelMap = [];
 
     /**
-     * @param callable $callable
+     * @param callable|null $callable $callable
      */
     function __construct(?callable $callable)
     {

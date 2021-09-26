@@ -16,6 +16,7 @@ use function str_repeat;
 use function array_fill;
 use function count;
 use function var_dump;
+use function microtime;
 
 class RequestThread extends Thread
 {

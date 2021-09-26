@@ -10,7 +10,6 @@ use mysqli;
 class DatabaseProvider
 {
     private array $sqlInfo;
-    private mysqli $db;
 
     /**
      * DatabaseProvider constructor.
@@ -18,24 +17,7 @@ class DatabaseProvider
     function __construct()
     {
         $this->sqlInfo = FriendsLoader::getInstance()->container['mysql-data'];
-        $this->createMySqlConnection();
         $this->createDatabaseStructure();
-    }
-
-    function createMySqlConnection()
-    {
-        $mysqli = new mysqli(
-            $this->sqlInfo['ip'],
-            $this->sqlInfo['user'],
-            $this->sqlInfo['password'],
-            $this->sqlInfo['database'],
-            $this->sqlInfo['port']
-        );
-        if ($mysqli->connect_error) {
-            FriendsLoader::getInstance()->getLogger()->error($mysqli->connect_error);
-            FriendsLoader::getInstance()->getServer()->shutdown();
-        }
-        $this->db = $mysqli;
     }
 
     /**
@@ -43,6 +25,18 @@ class DatabaseProvider
      */
     function createDatabaseStructure()
     {
+        $db = new mysqli(
+            $this->sqlInfo['ip'],
+            $this->sqlInfo['user'],
+            $this->sqlInfo['password'],
+            $this->sqlInfo['database'],
+            $this->sqlInfo['port']
+        );
+        if ($db->connect_error) {
+            FriendsLoader::getInstance()->getLogger()->error($db->connect_error);
+            FriendsLoader::getInstance()->getServer()->shutdown();
+        }
+
         /*
          * ---> FriendRequests <---
          * Will hold every friend requests for 24 hours.
@@ -61,7 +55,7 @@ class DatabaseProvider
          * ---> FriendSettings Table <---
          * Will store the settings of the player.
          */
-        $this->db->query(
+        $db->query(
             'CREATE TABLE IF NOT EXISTS FriendRequests(
            id MEDIUMINT NOT NULL AUTO_INCREMENT,
            sender VARCHAR(15) NOT NULL,
@@ -91,13 +85,6 @@ class DatabaseProvider
            notify_state BOOLEAN NOT NULL DEFAULT FALSE
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
-    }
-
-    /**
-     * Thread that will keep the Sql connection up and reconnect if it goes down.
-     */
-    function maintainSqlConnection()
-    {
-
+        $db->close();
     }
 }

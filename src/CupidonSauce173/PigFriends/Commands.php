@@ -3,6 +3,7 @@
 
 namespace CupidonSauce173\PigFriends;
 
+use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Translation;
@@ -73,13 +74,14 @@ class Commands extends Command implements PluginIdentifiableCommand
                     /*
                      * TODO: Send friend request to the target.
                      */
-                    $thread = new MultiFunctionThread(MultiFunctionThread::SEND_NEW_REQUEST,
-                        [
-                            $sender->getName(),
-                            $target,
-                            FriendsLoader::getInstance()->container['mysql-data']
-                        ]);
-                    $thread->start() && $thread->join();
+                    $order = new Order();
+                    $order->isSQL(true);
+                    $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);
+                    $order->setInputs([
+                        $sender->getName(),
+                        $target,
+                    ]);
+                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
                     break;
                 }
                 break;
@@ -113,13 +115,15 @@ class Commands extends Command implements PluginIdentifiableCommand
                 /** @var Request $request */
                 foreach ($requests as $request) {
                     if ($request->getSender() == $target) return;
-                    $thread = new MultiFunctionThread(MultiFunctionThread::ACCEPT_REQUEST,
-                        [
-                            $sender->getName(),
-                            $request->getId(),
-                            FriendsLoader::getInstance()->container['mysql-data']
-                        ]);
-                    $thread->start() && $thread->join();
+                    $order = new Order();
+                    $order->isSQL(true);
+                    $order->setCall(MultiFunctionThread::ACCEPT_REQUEST);
+                    $order->setInputs([
+                        $sender->getName(),
+                        $request->getId(),
+                        FriendsLoader::getInstance()->container['mysql-data']
+                    ]);
+                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
                     $sender->sendMessage(Translation::Translate('request.accepted', ['target' => $target]));
                     break;
                 }
@@ -138,13 +142,15 @@ class Commands extends Command implements PluginIdentifiableCommand
                 /** @var Request $request */
                 foreach ($requests as $request) {
                     if ($request->getSender() == $target) return;
-                    $thread = new MultiFunctionThread(MultiFunctionThread::REFUSE_REQUEST,
-                        [
-                            $request->getId(),
-                            null,
-                            FriendsLoader::getInstance()->container['mysql-data']
-                        ]);
-                    $thread->start() && $thread->join();
+                    $order = new Order();
+                    $order->isSQL(true);
+                    $order->setCall(MultiFunctionThread::REFUSE_REQUEST);
+                    $order->setInputs([
+                        $request->getId(),
+                        null,
+                        FriendsLoader::getInstance()->container['mysql-data']
+                    ]);
+                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
                     $sender->sendMessage(Translation::Translate('request.refused', ['target' => $target]));
                     break;
                 }
@@ -177,9 +183,6 @@ class Commands extends Command implements PluginIdentifiableCommand
                                     'totalPages' => $pages
                                 ]));
                         }
-                    } else {
-                        $sender->sendMessage(Translation::Translate('bad.args'));
-                        break;
                     }
                 } else {
                     $sender->sendMessage(Translation::Translate('friend.list.title'));

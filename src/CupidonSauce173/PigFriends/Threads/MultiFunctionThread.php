@@ -3,66 +3,87 @@
 
 namespace CupidonSauce173\PigFriends\Threads;
 
+use CupidonSauce173\PigFriends\Entities\Order;
+
 use Thread;
 use mysqli;
+use Volatile;
+
+use function microtime;
 
 class MultiFunctionThread extends Thread
 {
-    /*
-     * Event Field
-     */
     const REFUSE_REQUEST = 0;
     const ACCEPT_REQUEST = 1;
     const SEND_NEW_REQUEST = 2;
     const REMOVE_FRIEND = 3;
     const ADD_FAVORITE = 4;
     const REMOVE_FAVORITE = 5;
-
-    /*
-     * Custom Field
-     */
     const CUSTOM_QUERY = 6;
+
+    private Volatile $container;
 
     private mysqli $db;
 
-    /**
-     * MultiFunctionThread constructor.
-     * @param int $process
-     * @param array $inputs
-     * @param bool $mysql
-     */
-    function __construct(int $process, array $inputs, bool $mysql = false)
+    function __construct(Volatile $container)
     {
-        if ($mysql) {
-            $this->db = new mysqli(
-                $inputs[2]['ip'],
-                $inputs[2]['user'],
-                $inputs[2]['password'],
-                $inputs[2]['database'],
-                $inputs[2]['port']
-            );
+        $this->container = $container;
+    }
+
+    function run()
+    {
+        $nextTime = microtime(true) + 1;
+
+        include($this->container['folder'] . '\Entities\Order.php');
+
+        while ($this->container['runThread']) {
+            if (microtime(true) >= $nextTime) {
+                $this->ProcessThread();
+                $nextTime = microtime(true) + 1;
+            }
         }
-        switch ($process) {
-            case self::REFUSE_REQUEST:
-                $this->refuseRequest($inputs[0]);
-                break;
-            case self::ACCEPT_REQUEST:
-                $this->acceptRequest($inputs[0], $inputs[1]);
-                break;
-            case self::SEND_NEW_REQUEST:
-                $this->sendNewRequest($inputs[0], $inputs[1]);
-                break;
-            case self::REMOVE_FRIEND:
-                $this->removeFriend($inputs[0], $inputs[1]);
-                break;
-            case self::ADD_FAVORITE:
-                $this->addFavorite($inputs[0], $inputs[1]);
-                break;
-            case self::REMOVE_FAVORITE:
-                $this->removeFavorite($inputs[0], $inputs[1]);
-                break;
-            case self::CUSTOM_QUERY:
-                $this->customQuery($inputs[0], $inputs[1]);
+    }
+
+    function ProcessThread(): void
+    {
+
+        /** @var Order $order */
+        foreach ($this->container['multiFunctionQueue'] as $order) {
+            if ($order->isSQL()) {
+                if ($this->db->ping() === false) {
+                    var_dump('MySQL connection was closed. Opening it over MultiFunctionThread.');
+                    $this->db = new mysqli(
+                        $this->container['mysql-data']['ip'],
+                        $this->container['mysql-data']['user'],
+                        $this->container['mysql-data']['password'],
+                        $this->container['mysql-data']['database'],
+                        $this->container['mysql-data']['port'],
+                    );
+                }
+            }
+            $inputs = $order->getInputs();
+            switch ($order->getCall()) {
+                case self::REFUSE_REQUEST:
+                    $this->refuseRequest($inputs[0]);
+                    break;
+                case self::ACCEPT_REQUEST:
+                    $this->acceptRequest($inputs[0], $inputs[1]);
+                    break;
+                case self::SEND_NEW_REQUEST:
+                    $this->sendNewRequest($inputs[0], $inputs[1]);
+                    break;
+                case self::REMOVE_FRIEND:
+                    $this->removeFriend($inputs[0], $inputs[1]);
+                    break;
+                case self::ADD_FAVORITE:
+                    $this->addFavorite($inputs[0], $inputs[1]);
+                    break;
+                case self::REMOVE_FAVORITE:
+                    $this->removeFavorite($inputs[0], $inputs[1]);
+                    break;
+                case self::CUSTOM_QUERY:
+                    $this->customQuery($inputs[0], $inputs[1]);
+            }
         }
     }
 
@@ -88,8 +109,6 @@ class MultiFunctionThread extends Thread
         $query->bind_param('i', $requestId);
         $query->execute();
         $query->close();
-
-        $this->db->close();
     }
 
     /**
@@ -106,19 +125,18 @@ class MultiFunctionThread extends Thread
         $query->close();
 
         $string = "INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)";
+
         # Creating first relation base_player -> friend.
         $query = $this->db->prepare($string);
         $query->bind_param('ss', $player, $requestData['friend']);
         $query->execute();
         $query->close();
+
         # Creating second relation friend -> base_player.
         $query = $this->db->prepare($string);
         $query->bind_param('ss', $requestData['friend'], $player);
         $query->execute();
         $query->close();
-
-        # Closing connection.
-        $this->db->close();
     }
 
     /**
@@ -132,7 +150,6 @@ class MultiFunctionThread extends Thread
         $query->bind_param('ss', $author, $target);
         $query->execute();
         $query->close();
-        $this->db->close();
     }
 
     /**
@@ -143,16 +160,17 @@ class MultiFunctionThread extends Thread
     function removeFriend(string $sender, string $target): void
     {
         $string = "DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?";
+
         # Deleting base relation base_player -> friend.
         $query = $this->db->prepare($string);
         $query->bind_param('ss', $sender, $target);
         $query->execute();
         $query->close();
+
         # Deleting second relation friend -> base_player.
         $query = $this->db->prepare($string);
         $query->bind_param('ss', $target, $sender);
         $query->execute();
-        $query->close();
     }
 
     /**

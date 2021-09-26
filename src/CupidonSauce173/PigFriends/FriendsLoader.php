@@ -3,6 +3,7 @@
 
 namespace CupidonSauce173\PigFriends;
 
+use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\Api;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
@@ -25,6 +26,8 @@ class FriendsLoader extends PluginBase
 
     # Threaded field
     public Thread $requestThread;
+    public Thread $multiFunctionThread;
+
     public Volatile $container;
 
 
@@ -59,6 +62,8 @@ class FriendsLoader extends PluginBase
         $this->container['langKeys'] = [];
         $this->container['mysql-data'] = [];
         $this->container['players'] = [];
+        $this->container['multiFunctionQueue'] = [];
+        $this->container['runThread'] = true;
 
         # Populating container with configs, plugin folder & mysql-data & langKeys.
         $this->container['config'] = $config->getAll();
@@ -69,6 +74,16 @@ class FriendsLoader extends PluginBase
         # Starting the RequestThread.
         $this->requestThread = new RequestThread($this->container);
         $this->requestThread->start();
+
+        # Starting MultiFunctionThread.
+        $this->multiFunctionThread = new MultiFunctionThread($this->container);
+        $this->multiFunctionThread->start();
+    }
+
+    function onDisable()
+    {
+        # Will stop all threads from running.
+        $this->container['runThread'] = false;
     }
 
     /**

@@ -50,7 +50,7 @@ class Friend
      */
     function addFavorite(string $target): bool
     {
-        if (isset($this->favoriteList[$target])) return false;
+        if (isset($this->favorites[$target])) return false;
         $this->favorites[] = $target;
         return true;
     }
@@ -62,7 +62,7 @@ class Friend
      */
     function removeFavorite(string $target): bool
     {
-        if (isset($this->favoriteList[$target])) {
+        if (isset($this->favorites[$target])) {
             unset($this->favorites[$target]);
             return true;
         }
@@ -102,7 +102,7 @@ class Friend
      */
     function addFriend(string $target): bool
     {
-        if (isset($this->friendList[$target])) return false;
+        if (isset($this->friends[$target])) return false;
         $this->friends[] = $target;
         return true;
     }
@@ -114,7 +114,7 @@ class Friend
      */
     function removeFriend(string $target): bool
     {
-        if (isset($this->friendList[$target])) {
+        if (isset($this->friends[$target])) {
             unset($this->friends[$target]);
             return true;
         }
@@ -127,7 +127,7 @@ class Friend
      */
     function getRequests(): ?array
     {
-        if (!isset(FriendsLoader::getInstance()->objectContainer['requests'][strtolower($this->player->getName())])) return null;
-        return FriendsLoader::getInstance()->objectContainer['requests'][strtolower($this->player->getName())];
+        if (!isset(FriendsLoader::getInstance()->container['requests'][strtolower($this->player->getName())])) return null;
+        return FriendsLoader::getInstance()->container['requests'][strtolower($this->player->getName())];
     }
 }
