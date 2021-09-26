@@ -1,12 +1,12 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem;
+namespace CupidonSauce173\PigFriends;
 
-use CupidonSauce173\FriendsSystem\Entities\Request;
-use CupidonSauce173\FriendsSystem\Threads\MultiFunctionThread;
-use CupidonSauce173\FriendsSystem\Utils\DatabaseProvider;
-use CupidonSauce173\FriendsSystem\Utils\Translation;
+use CupidonSauce173\PigFriends\Entities\Request;
+use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
+use CupidonSauce173\PigFriends\Utils\Translation;
+
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
@@ -25,18 +25,15 @@ class Commands extends Command implements PluginIdentifiableCommand
 {
     public UI $ui;
 
-    /**
-     * Commands constructor.
-     */
     function __construct()
     {
-        parent::__construct(FriendsLoader::getInstance()->config['friends'],
+        parent::__construct(FriendsLoader::getInstance()->container['configs']['friends'],
             Translation::Translate('message.command.description'),
-            '/' . FriendsLoader::getInstance()->config['command-main'],
-            FriendsLoader::getInstance()->config['command.aliases']
+            '/' . FriendsLoader::getInstance()->container['configs']['command-main'],
+            FriendsLoader::getInstance()->container['configs']['command.aliases']
         );
-        if (FriendsLoader::getInstance()->config['use-permission']) {
-            $this->setPermission(('FriendsSystem.' . FriendsLoader::getInstance()->config['permission']));
+        if (FriendsLoader::getInstance()->container['configs']['use-permission']) {
+            $this->setPermission(('PigFriends.' . FriendsLoader::getInstance()->container['configs']['permission']));
         }
     }
 
@@ -47,7 +44,7 @@ class Commands extends Command implements PluginIdentifiableCommand
      */
     function execute(CommandSender $sender, string $commandLabel, array $args): void
     {
-        if (FriendsLoader::getInstance()->config['use-permission']) {
+        if (FriendsLoader::getInstance()->container['configs']['use-permission']) {
             if (!$sender->hasPermission($this->getPermission())) {
                 $sender->sendMessage(Translation::Translate('command.no.permission'));
                 return;
@@ -63,7 +60,7 @@ class Commands extends Command implements PluginIdentifiableCommand
         if ($friend == null) return; # Means that the object is still being created.
         switch ($args[0]) {
             case 'add':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
@@ -80,14 +77,14 @@ class Commands extends Command implements PluginIdentifiableCommand
                         [
                             $sender->getName(),
                             $target,
-                            FriendsLoader::getInstance()->config['mysql-data']
+                            FriendsLoader::getInstance()->container['mysql-data']
                         ]);
                     $thread->start() && $thread->join();
                     break;
                 }
                 break;
             case 'remove':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
@@ -103,24 +100,24 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 break;
             case 'accept':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 $requests = $friend->getRequests();
-                if($requests == null){
+                if ($requests == null) {
                     $sender->sendMessage(Translation::Translate('no.requests', ['target' => $target]));
                     break;
                 }
                 /** @var Request $request */
-                foreach($requests as $request){
-                    if($request->getSender() == $target) return;
+                foreach ($requests as $request) {
+                    if ($request->getSender() == $target) return;
                     $thread = new MultiFunctionThread(MultiFunctionThread::ACCEPT_REQUEST,
                         [
                             $sender->getName(),
                             $request->getId(),
-                            FriendsLoader::getInstance()->config['mysql-data']
+                            FriendsLoader::getInstance()->container['mysql-data']
                         ]);
                     $thread->start() && $thread->join();
                     $sender->sendMessage(Translation::Translate('request.accepted', ['target' => $target]));
@@ -128,24 +125,24 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 break;
             case 'refuse':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 $requests = $friend->getRequests();
-                if($requests == null){
+                if ($requests == null) {
                     $sender->sendMessage(Translation::Translate('no.requests', ['target' => $target]));
                     break;
                 }
                 /** @var Request $request */
-                foreach($requests as $request) {
+                foreach ($requests as $request) {
                     if ($request->getSender() == $target) return;
                     $thread = new MultiFunctionThread(MultiFunctionThread::REFUSE_REQUEST,
                         [
                             $request->getId(),
                             null,
-                            FriendsLoader::getInstance()->config['mysql-data']
+                            FriendsLoader::getInstance()->container['mysql-data']
                         ]);
                     $thread->start() && $thread->join();
                     $sender->sendMessage(Translation::Translate('request.refused', ['target' => $target]));
@@ -155,22 +152,22 @@ class Commands extends Command implements PluginIdentifiableCommand
             case 'list':
                 $friends = $friend->getFriends();
                 $count = count($friends);
-                $maxPerPage = FriendsLoader::getInstance()->config['friend-per-page'];
+                $maxPerPage = FriendsLoader::getInstance()->container['configs']['friend-per-page'];
                 $pages = round($count / $maxPerPage);
-                if(isset($args[1])){
-                    if(is_int((int)$args[1])){
-                        if($pages > (int)$args[1]){
+                if (isset($args[1])) {
+                    if (is_int((int)$args[1])) {
+                        if ($pages > (int)$args[1]) {
                             $sender->sendMessage(Translation::Translate('page.not.found', ['selectedPage' => (int)$args[1]]));
                             break;
-                        }else{
-                            for($pass = (int)$args[1] * $maxPerPage; $pass === 0; $pass--){
+                        } else {
+                            for ($pass = (int)$args[1] * $maxPerPage; $pass === 0; $pass--) {
                                 array_shift($friends);
                             }
                             $sender->sendMessage(Translation::Translate('friend.list.title'));
-                            foreach($friends as $f){
-                                if(FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null){
+                            foreach ($friends as $f) {
+                                if (FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null) {
                                     $sender->sendMessage(TF::GREEN . $f);
-                                }else{
+                                } else {
                                     $sender->sendMessage(TF::RED . $f);
                                 }
                             }
@@ -180,18 +177,18 @@ class Commands extends Command implements PluginIdentifiableCommand
                                     'totalPages' => $pages
                                 ]));
                         }
-                    }else{
+                    } else {
                         $sender->sendMessage(Translation::Translate('bad.args'));
                         break;
                     }
-                }else{
+                } else {
                     $sender->sendMessage(Translation::Translate('friend.list.title'));
                     $i = 0;
-                    foreach ($friends as $f){
-                        if($i == $maxPerPage) return;
-                        if(FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null){
+                    foreach ($friends as $f) {
+                        if ($i == $maxPerPage) return;
+                        if (FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null) {
                             $sender->sendMessage(TF::GREEN . $f);
-                        }else{
+                        } else {
                             $sender->sendMessage(TF::RED . $f);
                         }
                         $i++;
@@ -204,12 +201,12 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 break;
             case 'block':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
-                if(array_search($target, $friend->getBlocked())){
+                if (array_search($target, $friend->getBlocked())) {
                     $sender->sendMessage(Translation::Translate('already.blocked', ['target' => $target]));
                     break;
                 }
@@ -217,12 +214,12 @@ class Commands extends Command implements PluginIdentifiableCommand
                 $sender->sendMessage(Translation::Translate('player.blocked', ['target' => $target]));
                 break;
             case 'unblock':
-                if(!isset($args[1])){
+                if (!isset($args[1])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
-                if(!array_search($target, $friend->getBlocked())){
+                if (!array_search($target, $friend->getBlocked())) {
                     $sender->sendMessage(Translation::Translate('already.not.blocked', ['target' => $target]));
                     break;
                 }
@@ -230,11 +227,11 @@ class Commands extends Command implements PluginIdentifiableCommand
                 $sender->sendMessage(Translation::Translate('player.unblocked', ['target' => $target]));
                 break;
             case 'favorite':
-                if(!isset($args[1]) or !isset($args[2])){
+                if (!isset($args[1]) or !isset($args[2])) {
                     $sender->sendMessage(Translation::Translate('bad.args'));
                     break;
                 }
-                switch ($args[1]){
+                switch ($args[1]) {
                     case 'add':
                         /*
                          * TODO: Implement /f favorite add.

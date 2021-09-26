@@ -1,7 +1,7 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Lib;
+namespace CupidonSauce173\PigFriends\Lib;
 
 class SimpleForm extends Form
 {
@@ -13,7 +13,7 @@ class SimpleForm extends Form
     /**
      * @param callable $callable
      */
-    public function __construct(?callable $callable)
+    function __construct(?callable $callable)
     {
         parent::__construct($callable);
         $this->data["type"] = "form";
@@ -21,7 +21,7 @@ class SimpleForm extends Form
         $this->data["content"] = $this->content;
     }
 
-    public function processData(&$data): void
+    function processData(&$data): void
     {
         $data = $this->labelMap[$data] ?? null;
     }
@@ -29,7 +29,7 @@ class SimpleForm extends Form
     /**
      * @param string $title
      */
-    public function setTitle(string $title): void
+    function setTitle(string $title): void
     {
         $this->data["title"] = $title;
     }
@@ -37,7 +37,7 @@ class SimpleForm extends Form
     /**
      * @return string
      */
-    public function getTitle(): string
+    function getTitle(): string
     {
         return $this->data["title"];
     }
@@ -45,7 +45,7 @@ class SimpleForm extends Form
     /**
      * @return string
      */
-    public function getContent(): string
+    function getContent(): string
     {
         return $this->data["content"];
     }
@@ -53,7 +53,7 @@ class SimpleForm extends Form
     /**
      * @param string $content
      */
-    public function setContent(string $content): void
+    function setContent(string $content): void
     {
         $this->data["content"] = $content;
     }
@@ -62,9 +62,9 @@ class SimpleForm extends Form
      * @param string $text
      * @param int $imageType
      * @param string $imagePath
-     * @param string $label
+     * @param string|null $label
      */
-    public function addButton(string $text, int $imageType = -1, string $imagePath = "", ?string $label = null): void
+    function addButton(string $text, int $imageType = -1, string $imagePath = "", ?string $label = null): void
     {
         $content = ["text" => $text];
         if ($imageType !== -1) {

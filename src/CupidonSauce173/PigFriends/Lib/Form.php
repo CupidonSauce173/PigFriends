@@ -1,7 +1,7 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Lib;
+namespace CupidonSauce173\PigFriends\Lib;
 
 
 use pocketmine\form\Form as IForm;
@@ -15,9 +15,9 @@ abstract class Form implements IForm
     private $callable;
 
     /**
-     * @param callable $callable
+     * @param callable|null $callable $callable
      */
-    public function __construct(?callable $callable)
+    function __construct(?callable $callable)
     {
         $this->callable = $callable;
     }
@@ -27,7 +27,7 @@ abstract class Form implements IForm
      * @see Player::sendForm()
      *
      */
-    public function sendToPlayer(Player $player): void
+    function sendToPlayer(Player $player): void
     {
         $player->sendForm($this);
     }
@@ -35,7 +35,7 @@ abstract class Form implements IForm
     /**
      * @return callable|null
      */
-    public function getCallable(): ?callable
+    function getCallable(): ?callable
     {
         return $this->callable;
     }
@@ -43,7 +43,7 @@ abstract class Form implements IForm
     /**
      * @param callable|null $callable
      */
-    public function setCallable(?callable $callable)
+    function setCallable(?callable $callable)
     {
         $this->callable = $callable;
     }
@@ -52,7 +52,7 @@ abstract class Form implements IForm
      * @param Player $player
      * @param mixed $data
      */
-    public function handleResponse(Player $player, $data): void
+    function handleResponse(Player $player, $data): void
     {
         $this->processData($data);
         $callable = $this->getCallable();
@@ -61,11 +61,11 @@ abstract class Form implements IForm
         }
     }
 
-    public function processData(&$data): void
+    function processData(&$data): void
     {
     }
 
-    public function jsonSerialize()
+    function jsonSerialize()
     {
         return $this->data;
     }

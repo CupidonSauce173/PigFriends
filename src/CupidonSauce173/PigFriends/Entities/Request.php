@@ -1,7 +1,7 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Entities;
+namespace CupidonSauce173\PigFriends\Entities;
 
 use DateTime;
 
@@ -16,7 +16,7 @@ class Request
     /**
      * @param int $id
      */
-    public function setId(int $id): void
+    function setId(int $id): void
     {
         $this->id = $id;
     }
@@ -24,7 +24,7 @@ class Request
     /**
      * @return int|null
      */
-    public function getId(): ?int
+    function getId(): ?int
     {
         return $this->id;
     }
@@ -32,7 +32,7 @@ class Request
     /**
      * @param string $target
      */
-    public function setTarget(string $target): void
+    function setTarget(string $target): void
     {
         $this->target = $target;
     }
@@ -40,7 +40,7 @@ class Request
     /**
      * @return string|null
      */
-    public function getTarget(): ?string
+    function getTarget(): ?string
     {
         return $this->target;
     }
@@ -48,7 +48,7 @@ class Request
     /**
      * @param string $sender
      */
-    public function setSender(string $sender): void
+    function setSender(string $sender): void
     {
         $this->sender = $sender;
     }
@@ -56,7 +56,7 @@ class Request
     /**
      * @return string|null
      */
-    public function getSender(): ?string
+    function getSender(): ?string
     {
         return $this->sender;
     }
@@ -64,7 +64,7 @@ class Request
     /**
      * @param DateTime $dateTime
      */
-    public function setCreationDate(DateTime $dateTime): void
+    function setCreationDate(DateTime $dateTime): void
     {
         $this->creationDate = $dateTime;
     }
@@ -72,7 +72,7 @@ class Request
     /**
      * @return DateTime
      */
-    public function getCreationDate(): DateTime
+    function getCreationDate(): DateTime
     {
         return $this->creationDate;
     }
@@ -80,7 +80,7 @@ class Request
     /**
      * @return bool
      */
-    public function isAccepted(): bool
+    function isAccepted(): bool
     {
         return $this->accepted;
     }
@@ -88,7 +88,7 @@ class Request
     /**
      * @param bool $accepted
      */
-    public function setAccepted(bool $accepted = true): void
+    function setAccepted(bool $accepted = true): void
     {
         $this->accepted = $accepted;
     }

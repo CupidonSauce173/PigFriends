@@ -119,8 +119,8 @@ command-aliases:
   - fr
   - friend
 
-# Note that whatever permission you put "FriendsSystem." will always be at the beginning.
-# In this example, the permission will be FriendsSystem.permission.friends.
+# Note that whatever permission you put "PigFriends." will always be at the beginning.
+# In this example, the permission will be PigFriends.permission.friends.
 permission: permission.friends
 
 # true = use a permission, false = don't use a permission.
@@ -146,7 +146,7 @@ First, you need to register the API.
 
 public FriendsLoader $api;
 
-public function onEnable(){
+function onEnable(){
    $this->api = $this->getServer()->getPluginManager()->getPlugin('PigFriends');
 }
 ```
@@ -155,12 +155,12 @@ Then, you can use the API like you wish.
 
 ```php
 
-# Get FriendPlayer object by name.
-$api->getFriendPlayerByName($target); # Returns FriendPlayer or null (if didn't find anyone with that name online).
+# Get Friend object by name.
+$api->getFriendPlayerByName($target); # Returns Friend or null (if didn't find anyone with that name online).
 
 # Get FrienddPlayer object by PMMP Player.
-$api->getFriendPlayer($target); # Returns FriendPlayer or null (if didn't find any FriendPlayer with the supplied PMMP Player object).
-# Quick note, if this method returns null, it probably means that the FriendPlayer object is still being created and you should try again, even if a player has no friend, it will create a FriendPlayer object.
+$api->getFriendPlayer($target); # Returns Friend or null (if didn't find any Friend with the supplied PMMP Player object).
+# Quick note, if this method returns null, it probably means that the Friend object is still being created and you should try again, even if a player has no friend, it will create a Friend object.
 ```
 
 ### How it works?

@@ -1,9 +1,10 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Utils;
+namespace CupidonSauce173\PigFriends\Utils;
 
-use CupidonSauce173\FriendsSystem\FriendsLoader;
+use CupidonSauce173\PigFriends\FriendsLoader;
+
 use mysqli;
 
 class DatabaseProvider
@@ -14,9 +15,9 @@ class DatabaseProvider
     /**
      * DatabaseProvider constructor.
      */
-    public function __construct()
+    function __construct()
     {
-        $this->sqlInfo = FriendsLoader::getInstance()->config['mysql-data'];
+        $this->sqlInfo = FriendsLoader::getInstance()->container['mysql-data'];
         $this->createMySqlConnection();
         $this->createDatabaseStructure();
     }
@@ -30,7 +31,7 @@ class DatabaseProvider
             $this->sqlInfo['database'],
             $this->sqlInfo['port']
         );
-        if($mysqli->connect_error){
+        if ($mysqli->connect_error) {
             FriendsLoader::getInstance()->getLogger()->error($mysqli->connect_error);
             FriendsLoader::getInstance()->getServer()->shutdown();
         }

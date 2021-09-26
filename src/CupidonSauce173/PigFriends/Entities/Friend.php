@@ -1,14 +1,15 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Entities;
+namespace CupidonSauce173\PigFriends\Entities;
 
-use CupidonSauce173\FriendsSystem\FriendsLoader;
+use CupidonSauce173\PigFriends\FriendsLoader;
+
 use pocketmine\Player;
 
 use function strtolower;
 
-class FriendPlayer
+class Friend
 {
     private array $friends;
     private array $favorites;
@@ -34,7 +35,7 @@ class FriendPlayer
     }
 
     /**
-     * Returns the player object of the FriendPlayer.
+     * Returns the player object of the Friend.
      * @return Player
      */
     function getPlayer(): Player
@@ -126,7 +127,7 @@ class FriendPlayer
      */
     function getRequests(): ?array
     {
-        if(!isset(FriendsLoader::getInstance()->objectContainer['requests'][strtolower($this->player->getName())])) return null;
+        if (!isset(FriendsLoader::getInstance()->objectContainer['requests'][strtolower($this->player->getName())])) return null;
         return FriendsLoader::getInstance()->objectContainer['requests'][strtolower($this->player->getName())];
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Threads;
+namespace CupidonSauce173\PigFriends\Threads;
 
 use Thread;
 use mysqli;
@@ -33,7 +33,7 @@ class MultiFunctionThread extends Thread
      */
     function __construct(int $process, array $inputs, bool $mysql = false)
     {
-        if($mysql){
+        if ($mysql) {
             $this->db = new mysqli(
                 $inputs[2]['ip'],
                 $inputs[2]['user'],

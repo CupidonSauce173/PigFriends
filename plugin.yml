@@ -1,5 +1,5 @@
 name: PigFriends
-main: CupidonSauce173\FriendsSystem\FriendsLoader
+main: CupidonSauce173\PigFriends\FriendsLoader
 version: 1.0.0
 api: 3.21.0
 author: CupidonSauce173

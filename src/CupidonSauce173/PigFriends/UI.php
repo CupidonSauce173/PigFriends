@@ -1,18 +1,16 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem;
+namespace CupidonSauce173\PigFriends;
 
 use pocketmine\Player;
 
 class UI
 {
-    # Field for different events for the confirmationPage UI.
     const SET_FAVORITE = 0;
     const UNSET_FAVORITE = 1;
     const REMOVE_FRIEND = 2;
     const BLOCK_PLAYER = 3;
-    # End Field.
 
     /**
      * Main page of the UI, will display all the options.
@@ -96,6 +94,4 @@ class UI
     {
 
     }
-
-
 }

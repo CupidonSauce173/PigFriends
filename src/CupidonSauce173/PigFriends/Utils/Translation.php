@@ -1,10 +1,10 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Utils;
+namespace CupidonSauce173\PigFriends\Utils;
 
 
-use CupidonSauce173\FriendsSystem\FriendsLoader;
+use CupidonSauce173\PigFriends\FriendsLoader;
 
 use function str_replace;
 

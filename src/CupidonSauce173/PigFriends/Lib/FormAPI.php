@@ -1,7 +1,7 @@
 <?php
 
 
-namespace CupidonSauce173\FriendsSystem\Lib;
+namespace CupidonSauce173\PigFriends\Lib;
 
 
 class FormAPI
@@ -10,7 +10,7 @@ class FormAPI
      * @param callable|null $function
      * @return SimpleForm
      */
-    public function createSimpleForm(callable $function = null): SimpleForm
+    function createSimpleForm(callable $function = null): SimpleForm
     {
         return new SimpleForm($function);
     }
