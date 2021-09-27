@@ -3,6 +3,7 @@
 
 namespace CupidonSauce173\PigFriends\Threads;
 
+use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
 
 use Thread;
@@ -20,6 +21,7 @@ class MultiFunctionThread extends Thread
     const ADD_FAVORITE = 4;
     const REMOVE_FAVORITE = 5;
     const CUSTOM_QUERY = 6;
+    const CREATE_FRIEND_ENTITY = 7;
 
     private Volatile $container;
 
@@ -35,6 +37,7 @@ class MultiFunctionThread extends Thread
         $nextTime = microtime(true) + 1;
 
         include($this->container['folder'] . '\Entities\Order.php');
+        include($this->container['folder'] . '\Entities\Friend.php');
 
         while ($this->container['runThread']) {
             if (microtime(true) >= $nextTime) {
@@ -61,7 +64,8 @@ class MultiFunctionThread extends Thread
                     );
                 }
             }
-            $inputs = $order->getInputs();
+            $inputs = (array)$order->getInputs();
+            unset($this->container['multiFunctionQueue'][$order]);
             switch ($order->getCall()) {
                 case self::REFUSE_REQUEST:
                     $this->refuseRequest($inputs[0]);
@@ -83,6 +87,10 @@ class MultiFunctionThread extends Thread
                     break;
                 case self::CUSTOM_QUERY:
                     $this->customQuery($inputs[0], $inputs[1]);
+                    break;
+                case self::CREATE_FRIEND_ENTITY:
+                    $this->createFriendEntity($inputs[0]);
+                    break;
             }
         }
     }
@@ -97,6 +105,76 @@ class MultiFunctionThread extends Thread
         /*
          * TODO: Implement this.
          */
+    }
+
+    function createFriendEntity(string $player): void
+    {
+        # This whole process could be only one or two query, but I need to think more about it.
+
+        # Prepare & Execute query for the player settings.
+        $query = $this->db->prepare("SELECT (request_state,notify_state) FROM FriendSettings WHERE player = ?");
+        $query->bind_param('s', $player);
+        $query->execute();
+
+        # Retrieve & Process data.
+        $results = $query->get_result();
+
+        $settings = [];
+        while ($row = $results->fetch_assoc()) {
+            $settings['request_state'] = $row['request_state'];
+            $settings['notify_state'] = $row['notify_state'];
+        }
+        $query->close();
+
+        # Prepare & Execute query for relations related to the player.
+        $query = $this->db->prepare("SELECT (id,friend,reg_date) FROM FriendRelation WHERE base_player = ?");
+        $query->bind_param('s', $player);
+        $query->execute();
+
+        # Retrieve & Process data.
+        $results = $query->get_result();
+
+        $relations = [];
+        $ids = [];
+        while ($row = $results->fetch_assoc()) {
+            $relations[] = [
+                'id' => (int)$row['id'],
+                'friend' => $row['friend'], # Might rename 'friend' to 'target' since a 'friend' can be set as 'blocked' in the database.
+                'reg_date' => $row['reg_date']
+            ];
+            $ids[] = (int)$row['id'];
+        }
+        $query->close();
+
+        # Creating list of clauses and types.
+        $clause = implode(',', array_fill(0, count($relations), '?'));
+        $types = str_repeat('i', count($relations));
+
+        # Prepare & Execute query for relation states.
+        $query = $this->db->prepare("SELECT (relation_id,is_favorite,is_blocked) FROM RelationState WHERE relation_id IN ($clause)");
+        $query->bind_param($types, ...$ids);
+        $query->execute();
+
+        # Creating & Setting friend entity.
+        $entity = new Friend();
+        $entity->setRawSettings($settings);
+        $entity->setPlayer($player);
+
+        # Creating the friends, favorites and blocked players lists.
+        $results = $query->get_result();
+        while ($row = $results->fetch_assoc()) {
+            foreach ($relations as $relation) {
+                if ($row['relation_id'] !== $relation['id']) return;
+                if ($row['is_blocked']) {
+                    $entity->blockPlayer($relation['friend']);
+                    return;
+                }
+                $entity->addFriend($relation['friend']);
+                if ($row['is_favorite']) {
+                    $entity->addFavorite($relation['friend']);
+                }
+            }
+        }
     }
 
     /**

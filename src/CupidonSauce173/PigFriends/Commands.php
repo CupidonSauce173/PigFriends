@@ -81,7 +81,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         $sender->getName(),
                         $target,
                     ]);
-                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
+                    $order->execute();
                     break;
                 }
                 break;
@@ -123,7 +123,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         $request->getId(),
                         FriendsLoader::getInstance()->container['mysql-data']
                     ]);
-                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
+                    $order->execute();
                     $sender->sendMessage(Translation::Translate('request.accepted', ['target' => $target]));
                     break;
                 }
@@ -150,7 +150,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         null,
                         FriendsLoader::getInstance()->container['mysql-data']
                     ]);
-                    FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $order;
+                    $order->execute();
                     $sender->sendMessage(Translation::Translate('request.refused', ['target' => $target]));
                     break;
                 }

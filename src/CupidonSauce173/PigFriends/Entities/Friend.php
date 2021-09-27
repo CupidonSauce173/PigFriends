@@ -14,7 +14,8 @@ class Friend
     private array $friends;
     private array $favorites;
     private array $blocked;
-    private Player $player;
+    private array $settings;
+    private string $player;
 
     /**
      * Returns all the friends of the player.
@@ -23,6 +24,24 @@ class Friend
     function getFriends(): array
     {
         return $this->friends;
+    }
+
+    /**
+     * Sets the player settings directly from the query.
+     * @param array $settings
+     */
+    function setRawSettings(array $settings): void
+    {
+        $this->settings = $settings;
+    }
+
+    /**
+     * Returns the settings of the players as array.
+     * @return array
+     */
+    function getRawSettings(): array
+    {
+        return $this->settings;
     }
 
     /**
@@ -35,12 +54,21 @@ class Friend
     }
 
     /**
-     * Returns the player object of the Friend.
-     * @return Player
+     * Returns the player username of the Friend.
+     * @return string
      */
-    function getPlayer(): Player
+    function getPlayer(): string
     {
         return $this->player;
+    }
+
+    /**
+     * Set the player username.
+     * @param string $user
+     */
+    function setPlayer(string $user): void
+    {
+        $this->player = $user;
     }
 
     /**
@@ -127,7 +155,7 @@ class Friend
      */
     function getRequests(): ?array
     {
-        if (!isset(FriendsLoader::getInstance()->container['requests'][strtolower($this->player->getName())])) return null;
-        return FriendsLoader::getInstance()->container['requests'][strtolower($this->player->getName())];
+        if (!isset(FriendsLoader::getInstance()->container['requests'][strtolower($this->player)])) return null;
+        return FriendsLoader::getInstance()->container['requests'][strtolower($this->player)];
     }
 }

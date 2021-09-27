@@ -80,7 +80,7 @@ class RequestThread extends Thread
                 $requestClass->setCreationDate($dateTime);
                 $this->container['requests'][$row['receiver']][(int)$row['id']] = $requestClass;
             } catch (Exception $e) {
-                var_dump('problem while creating a new DateTime');
+                var_dump('problem while processing row in RequestThread.');
             }
         }
         $stmt->close();

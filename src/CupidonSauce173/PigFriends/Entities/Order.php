@@ -2,11 +2,18 @@
 
 namespace CupidonSauce173\PigFriends\Entities;
 
+use CupidonSauce173\PigFriends\FriendsLoader;
+
 class Order
 {
     private bool $mysql;
     private array $inputs;
     private int $event;
+
+    function execute(): void
+    {
+        FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $this;
+    }
 
     /**
      * @param bool|null $value
@@ -14,7 +21,7 @@ class Order
      */
     function isSQL(bool $value = null): ?bool
     {
-        if($value === null) return $this->mysql;
+        if ($value === null) return $this->mysql;
         $this->mysql = $value;
         return null;
     }
@@ -50,5 +57,4 @@ class Order
     {
         return $this->inputs;
     }
-
 }

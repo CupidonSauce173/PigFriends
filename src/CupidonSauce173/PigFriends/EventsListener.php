@@ -2,6 +2,8 @@
 
 namespace CupidonSauce173\PigFriends;
 
+use CupidonSauce173\PigFriends\Entities\Order;
+use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -11,6 +13,11 @@ class EventsListener implements Listener
     function onJoin(PlayerJoinEvent $event): void
     {
         FriendsLoader::getInstance()->container['players'][] = $event->getPlayer()->getName();
+        $order = new Order();
+        $order->isSQL(true);
+        $order->setInputs([$event->getPlayer()->getName()]);
+        $order->setCall(MultiFunctionThread::CREATE_FRIEND_ENTITY);
+        $order->execute();
     }
 
     function onLeave(PlayerQuitEvent $event): void
