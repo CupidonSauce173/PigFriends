@@ -57,7 +57,7 @@ class Commands extends Command implements PluginIdentifiableCommand
             return;
         }
         /** @var Player $sender */
-        $friend = FriendsLoader::getInstance()->api->getFriendPlayer($sender);
+        $friend = FriendsLoader::getInstance()->api->getFriendPlayer($sender->getName());
         if ($friend == null) return; # Means that the object is still being created.
         switch ($args[0]) {
             case 'add':
