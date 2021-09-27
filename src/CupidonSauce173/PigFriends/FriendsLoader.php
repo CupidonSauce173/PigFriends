@@ -95,7 +95,7 @@ class FriendsLoader extends PluginBase
     }
 
     /**
-     * @return static
+     * @return FriendsLoader
      */
     public static function getInstance(): self
     {
