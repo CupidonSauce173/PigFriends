@@ -164,7 +164,7 @@ class MultiFunctionThread extends Thread
         $results = $query->get_result();
         while ($row = $results->fetch_assoc()) {
             foreach ($relations as $relation) {
-                if ($row['relation_id'] !== $relation['id']) return;
+                if ((int)$row['relation_id'] !== $relation['id']) return;
                 if ($row['is_blocked']) {
                     $entity->blockPlayer($relation['friend']);
                     return;
