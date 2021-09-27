@@ -17,8 +17,8 @@ class Api
      */
     function getFriendPlayerByName(string $target): ?Friend
     {
-        if (isset(FriendsLoader::getInstance()->objectContainer['friends'][$target])) {
-            return FriendsLoader::getInstance()->objectContainer['friends'][$target];
+        if (isset(FriendsLoader::getInstance()->container['friends'][$target])) {
+            return FriendsLoader::getInstance()->container['friends'][$target];
         }
         return null;
     }

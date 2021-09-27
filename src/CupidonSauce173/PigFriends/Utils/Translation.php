@@ -18,8 +18,8 @@ class Translation
      */
     static function Translate(string $message, array $langKey = null): ?string
     {
-        if (!isset(FriendsLoader::getInstance()->langKeys[$message])) return null;
-        $text = FriendsLoader::getInstance()->langKeys[$message];
+        if (!isset(FriendsLoader::getInstance()->container['langKeys'][$message])) return null;
+        $text = FriendsLoader::getInstance()->container['langKeys'][$message];
         if ($langKey !== null) {
             $text = str_replace($langKey[0], $langKey[1], $text);
         }

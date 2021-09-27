@@ -66,7 +66,8 @@ class RequestThread extends Thread
 
         $results = $stmt->get_result();
 
-        if ($results === null) return;
+        if ($results === false) return;
+
         while ($row = $results->fetch_assoc()) {
             try {
                 if (array_search((int)$row['id'], $this->container['requests'][$row['receiver']])) return;
