@@ -5,8 +5,6 @@ namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
 
-use pocketmine\Player;
-
 use function strtolower;
 
 class Friend

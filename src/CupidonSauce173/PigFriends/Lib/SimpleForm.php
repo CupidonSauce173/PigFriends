@@ -3,6 +3,8 @@
 
 namespace CupidonSauce173\PigFriends\Lib;
 
+use function count;
+
 class SimpleForm extends Form
 {
 

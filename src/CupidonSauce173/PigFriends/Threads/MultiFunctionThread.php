@@ -10,7 +10,12 @@ use Thread;
 use mysqli;
 use Volatile;
 
+use function var_dump;
 use function microtime;
+use function implode;
+use function str_repeat;
+use function array_fill;
+use function count;
 
 class MultiFunctionThread extends Thread
 {
