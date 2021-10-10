@@ -4,6 +4,7 @@
 namespace CupidonSauce173\PigFriends\Utils;
 
 
+use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\FriendsLoader;
 
 use function str_replace;
@@ -24,5 +25,22 @@ class Translation
             $text = str_replace($langKey[0], $langKey[1], $text);
         }
         return $text;
+    }
+}
+
+class FriendAPI
+{
+    /**
+     * Gets a Friend object from a username
+     * @param string $target
+     * @return Friend|null
+     */
+    function getFriendPlayer(string $target): ?Friend
+    {
+        /** @var Friend $friend */
+        foreach (FriendsLoader::getInstance()->container['friends'] as $friend) {
+            if ($friend->getPlayer() === $target) return $friend;
+        }
+        return null;
     }
 }

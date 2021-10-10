@@ -5,8 +5,8 @@ namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Lib\FormAPI;
-
 use CupidonSauce173\PigFriends\Utils\Translation;
+
 use pocketmine\Player;
 
 class UI

@@ -24,7 +24,7 @@ use function is_int;
 
 class Commands extends Command implements PluginIdentifiableCommand
 {
-    public UI $ui;
+    private UI $ui;
 
     function __construct()
     {
@@ -36,6 +36,8 @@ class Commands extends Command implements PluginIdentifiableCommand
         if (FriendsLoader::getInstance()->container['configs']['use-permission']) {
             $this->setPermission(('PigFriends.' . FriendsLoader::getInstance()->container['configs']['permission']));
         }
+
+        $this->ui = new UI();
     }
 
     /**
@@ -71,9 +73,6 @@ class Commands extends Command implements PluginIdentifiableCommand
                         $sender->sendMessage(Translation::Translate('error.already.friend', ['friend' => $target]));
                         break;
                     }
-                    /*
-                     * TODO: Send friend request to the target.
-                     */
                     $order = new Order();
                     $order->isSQL(true);
                     $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);

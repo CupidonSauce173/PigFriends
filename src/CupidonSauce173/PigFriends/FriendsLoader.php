@@ -5,7 +5,7 @@ namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
-use CupidonSauce173\PigFriends\Utils\Api;
+use CupidonSauce173\PigFriends\Utils\FriendAPI;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
 
 use pocketmine\plugin\PluginBase;
@@ -22,7 +22,7 @@ use function parse_ini_file;
 class FriendsLoader extends PluginBase
 {
     public static FriendsLoader $instance;
-    public Api $api;
+    public FriendAPI $api;
 
     # Threaded field
     public Thread $requestThread;
@@ -33,8 +33,7 @@ class FriendsLoader extends PluginBase
 
     function onEnable()
     {
-        $this->api = new Api();
-        new DatabaseProvider();
+        $this->api = new FriendAPI();
         $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
 
         # Verification of the config files.
@@ -47,13 +46,23 @@ class FriendsLoader extends PluginBase
 
         $config = new Config($this->getDataFolder() . 'config.yml', Config::YAML);
         if (preg_match('/[^A-Za-z-.]/', $this->container['configs']['permission'])) {
-            $this->getLogger()->error('Wrong permission setting. Please do not put any special characters.');
+            $this->getLogger()->error('Wrong permission settings. Please do not put any special characters.');
             $this->getServer()->shutdown();
         }
+
+        new DatabaseProvider();
 
         # Register the commands
         $this->getServer()->getCommandMap()->register('PigFriends', new Commands());
 
+        $this->initThreadField($config);
+    }
+
+    /**
+     * Method to start the different threads that the plugin will need.
+     */
+    function initThreadField(Config $config): void
+    {
         # MySQL field & Threads
         $this->container = new Volatile();
         $this->container['config'] = [];

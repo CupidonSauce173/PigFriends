@@ -37,7 +37,7 @@ class RequestThread extends Thread
 
         include($this->container['folder'] . '\Entities\Request.php');
 
-        while ($this->container['configs']['request-check-time']) {
+        while ($this->container['runThread']) {
             if (microtime(true) >= $nextTime) {
                 $this->processThread();
                 $nextTime = microtime(true) + $this->container['configs']['request-check-time'];
