@@ -4,7 +4,9 @@
 namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
+use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Lib\FormAPI;
+use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Translation;
 
 use pocketmine\Player;
@@ -31,7 +33,8 @@ class UI
      */
     function mainUI(Player $player)
     {
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data)
+        {
             if ($data === null) return;
             $friend = FriendsLoader::getInstance()->api->getFriendPlayer($player->getName());
 
@@ -73,6 +76,26 @@ class UI
     function addPage(Player $player, Friend $friend)
     {
         # Needs to add the createCustomForm method in the lib.
+        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend)
+        {
+            if($data[0] == null) return;
+            if(isset($friend->getRequests()[$data[0]])){
+                $player->sendMessage(Translation::Translate('error.already.sent', ['target' => $data[0]]));
+                return;
+            }
+
+            # Create a friend request.
+            $order = new Order();
+            $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);
+            $order->isSQL(true);
+            $order->setInputs([$player->getName(), $data[0]]);
+            $order->execute();
+
+            $player->sendMessage(Translation::Translate('utils.request.sent', ['target' => $data[0]]));
+        });
+        $ui->setTitle(Translation::Translate('ui.main.title'));
+        $ui->addInput(Translation::Translate('ui.addPage.input'));
+        $ui->sendToPlayer($player);
     }
 
     /**

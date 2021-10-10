@@ -9,11 +9,49 @@ use function strtolower;
 
 class Friend
 {
-    private array $friends;
-    private array $favorites;
-    private array $blocked;
-    private array $settings;
+    private array $friends = [];
+    private array $favorites = [];
+    private array $blocked = [];
+    private array $settings = [];
+    private array $requestSent = [];
     private string $player;
+
+    /**
+     * Returns all the requests sent by the player.
+     * @return array
+     */
+    function getRequestSent(): array
+    {
+        return $this->requestSent;
+    }
+
+    /**
+     * Set all the requests sent by the player.
+     * @param array $value
+     */
+    function setAllRequestSent(array $value): void
+    {
+        $this->requestSent = $value;
+    }
+
+    /**
+     * Add a request in the requestSent list.
+     * @param string $value
+     */
+    function addRequestSent(string $value): void
+    {
+        $this->requestSent[] = $value;
+    }
+
+    /**
+     * Remove a request sent by the player.
+     * @param string $value
+     */
+    function removeRequestSent(string $value): void
+    {
+        if(!isset($this->requestSent[$value])) return;
+        unset($this->requestSent[$value]);
+    }
 
     /**
      * Returns all the friends of the player.

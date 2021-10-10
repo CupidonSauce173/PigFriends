@@ -32,6 +32,8 @@ class MultiFunctionThread extends Thread
 
     private mysqli $db;
 
+    # TODO: Need to create a method to insert a new row if the player doesn't exist in the database.
+
     function __construct(Volatile $container)
     {
         $this->container = $container;
