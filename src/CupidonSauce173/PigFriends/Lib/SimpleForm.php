@@ -8,7 +8,7 @@ use function count;
 class SimpleForm extends Form
 {
 
-    private string $content = "";
+    private string $content = '';
 
     private array $labelMap = [];
 
@@ -18,9 +18,9 @@ class SimpleForm extends Form
     function __construct(?callable $callable)
     {
         parent::__construct($callable);
-        $this->data["type"] = "form";
-        $this->data["title"] = "";
-        $this->data["content"] = $this->content;
+        $this->data['type'] = 'form';
+        $this->data['title'] = '';
+        $this->data['content'] = $this->content;
     }
 
     function processData(&$data): void
@@ -33,7 +33,7 @@ class SimpleForm extends Form
      */
     function setTitle(string $title): void
     {
-        $this->data["title"] = $title;
+        $this->data['title'] = $title;
     }
 
     /**
@@ -41,7 +41,7 @@ class SimpleForm extends Form
      */
     function getTitle(): string
     {
-        return $this->data["title"];
+        return $this->data['title'];
     }
 
     /**
@@ -49,7 +49,7 @@ class SimpleForm extends Form
      */
     function getContent(): string
     {
-        return $this->data["content"];
+        return $this->data['content'];
     }
 
     /**
@@ -57,7 +57,7 @@ class SimpleForm extends Form
      */
     function setContent(string $content): void
     {
-        $this->data["content"] = $content;
+        $this->data['content'] = $content;
     }
 
     /**
@@ -66,14 +66,14 @@ class SimpleForm extends Form
      * @param string $imagePath
      * @param string|null $label
      */
-    function addButton(string $text, int $imageType = -1, string $imagePath = "", ?string $label = null): void
+    function addButton(string $text, int $imageType = -1, string $imagePath = '', ?string $label = null): void
     {
-        $content = ["text" => $text];
+        $content = ['text' => $text];
         if ($imageType !== -1) {
-            $content["image"]["type"] = $imageType === 0 ? "path" : "url";
-            $content["image"]["data"] = $imagePath;
+            $content['image']['type'] = $imageType === 0 ? 'path' : 'url';
+            $content['image']['data'] = $imagePath;
         }
-        $this->data["buttons"][] = $content;
+        $this->data['buttons'][] = $content;
         $this->labelMap[] = $label ?? count($this->labelMap);
     }
 }
