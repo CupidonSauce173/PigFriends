@@ -27,6 +27,7 @@ class MultiFunctionThread extends Thread
     const REMOVE_FAVORITE = 5;
     const CUSTOM_QUERY = 6;
     const CREATE_FRIEND_ENTITY = 7;
+    const UPDATE_USER_SETTINGS = 8;
 
     private Volatile $container;
 
@@ -98,6 +99,9 @@ class MultiFunctionThread extends Thread
                 case self::CREATE_FRIEND_ENTITY:
                     $this->createFriendEntity($inputs[0]);
                     break;
+                case self::UPDATE_USER_SETTINGS:
+                    $this->updateUserSettings($inputs[0], $inputs[1]);
+                    break;
             }
         }
     }
@@ -114,12 +118,32 @@ class MultiFunctionThread extends Thread
          */
     }
 
+    /**
+     * @param string $player
+     * @param array $data
+     */
+    function updateUserSettings(string $player, array $data): void
+    {
+        # Preparing values
+        $n = $data[0];
+        $r = $data[1];
+        $j = $data[2];
+
+        # Updating user settings in MySQL.
+        $query = $this->db->prepare("UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?");
+        $query->bind_param('iiis', $n, $r, $j, $player);
+        $query->execute();
+    }
+
+    /**
+     * @param string $player
+     */
     function createFriendEntity(string $player): void
     {
         # This whole process could be only one or two query, but I need to think more about it.
 
         # Prepare & Execute query for the player settings.
-        $query = $this->db->prepare("SELECT (request_state,notify_state) FROM FriendSettings WHERE player = ?");
+        $query = $this->db->prepare("SELECT (request_state, notify_state, join_message) FROM FriendSettings WHERE player = ?");
         $query->bind_param('s', $player);
         $query->execute();
 
@@ -128,13 +152,14 @@ class MultiFunctionThread extends Thread
 
         $settings = [];
         while ($row = $results->fetch_assoc()) {
-            $settings['request_state'] = $row['request_state'];
-            $settings['notify_state'] = $row['notify_state'];
+            $settings[0] = $row['request_state'];
+            $settings[1] = $row['notify_state'];
+            $settings[2] = $row['join_message'];
         }
         $query->close();
 
         # Prepare & Execute query for relations related to the player.
-        $query = $this->db->prepare("SELECT (id,friend,reg_date) FROM FriendRelation WHERE base_player = ?");
+        $query = $this->db->prepare("SELECT (id, friend, reg_date) FROM FriendRelation WHERE base_player = ?");
         $query->bind_param('s', $player);
         $query->execute();
 
@@ -158,13 +183,13 @@ class MultiFunctionThread extends Thread
         $types = str_repeat('i', count($relations));
 
         # Prepare & Execute query for relation states.
-        $query = $this->db->prepare("SELECT (relation_id,is_favorite,is_blocked) FROM RelationState WHERE relation_id IN ($clause)");
+        $query = $this->db->prepare("SELECT (relation_id, is_favorite, is_blocked) FROM RelationState WHERE relation_id IN ($clause)");
         $query->bind_param($types, ...$ids);
         $query->execute();
 
         # Creating & Setting friend entity.
         $entity = new Friend();
-        $entity->setRawSettings($settings);
+        $entity->setRawSettings($settings[0], $settings[1], $settings[2]);
         $entity->setPlayer($player);
 
         # Creating the friends, favorites and blocked players lists.

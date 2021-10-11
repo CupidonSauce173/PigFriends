@@ -12,9 +12,58 @@ class Friend
     private array $friends = [];
     private array $favorites = [];
     private array $blocked = [];
-    private array $settings = [];
     private array $requestSent = [];
     private string $player;
+
+    private bool $notifyState;
+    private bool $requestState;
+    private int $joinMessage;
+
+    const ALL_FRIENDS = 0;
+    const ONLY_FAVORITES = 1;
+    const NOBODY = 2;
+
+    function getJoinSetting(): int
+    {
+        return $this->joinMessage;
+    }
+
+    function setJoinSetting(int $state): void
+    {
+        $this->joinMessage = $state;
+    }
+
+    function getNotifyState(): bool
+    {
+        return $this->notifyState;
+    }
+
+    function getRequestState(): bool
+    {
+        return $this->requestState;
+    }
+
+    function setNotifyState(bool $state): void
+    {
+        $this->notifyState = $state;
+    }
+
+    function setRequestState(bool $state): void
+    {
+        $this->requestState = $state;
+    }
+
+    /**
+     * Sets the player settings directly from the query.
+     * @param bool $requestState
+     * @param bool $notifyState
+     */
+    function setRawSettings(bool $requestState, bool $notifyState, bool $joinMessage): void
+    {
+        $this->notifyState = $notifyState;
+        $this->requestState = $requestState;
+        $this->joinMessage = $joinMessage;
+    }
 
     /**
      * Returns all the requests sent by the player.
@@ -60,24 +109,6 @@ class Friend
     function getFriends(): array
     {
         return $this->friends;
-    }
-
-    /**
-     * Sets the player settings directly from the query.
-     * @param array $settings
-     */
-    function setRawSettings(array $settings): void
-    {
-        $this->settings = $settings;
-    }
-
-    /**
-     * Returns the settings of the players as array.
-     * @return array
-     */
-    function getRawSettings(): array
-    {
-        return $this->settings;
     }
 
     /**

@@ -18,7 +18,7 @@ class UI
     const REMOVE_FRIEND = 2;
     const BLOCK_PLAYER = 3;
 
-    private array $pageContainer; # Contain the current page of the players using the UI.
+    private array $pageContainer = []; # Contain the current page of the players using the UI.
 
     private FormAPI $uiApi;
 
@@ -31,7 +31,7 @@ class UI
      * Main page of the UI, will display all the options.
      * @param Player $player The player that receives the UI.
      */
-    function mainUI(Player $player)
+    function mainUI(Player $player): void
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data)
         {
@@ -58,13 +58,11 @@ class UI
 
         $ui->setTitle(Translation::Translate('ui.main.title'));
         $ui->setContent(Translation::Translate('ui.main.content'));
-
         $ui->addButton(Translation::Translate('ui.button.add.friend'));
         $ui->addButton(Translation::Translate('ui.button.friends'));
         $ui->addButton(Translation::Translate('ui.button.settings'));
         $ui->addButton(Translation::Translate('ui.button.help'));
         $ui->addButton(Translation::Translate('ui.button.close'));
-
         $ui->sendToPlayer($player);
     }
 
@@ -73,7 +71,7 @@ class UI
      * @param Player $player
      * @param Friend $friend The Friend object related to the player.
      */
-    function addPage(Player $player, Friend $friend)
+    function addPage(Player $player, Friend $friend): void
     {
         # Needs to add the createCustomForm method in the lib.
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend)
@@ -103,21 +101,30 @@ class UI
      * @param Player $player The player that receives the UI.
      * @param Friend $friend The Friend object related to the player.
      */
-    function settingsPage(Player $player, Friend $friend)
+    function settingsPage(Player $player, Friend $friend): void
     {
-        /*
-        List of settings for the player
+        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend)
+        {
+            # Process data.
+            $friend->setNotifyState($data[0]);
+            $friend->setRequestState($data[1]);
+            $friend->setJoinSetting($data[2]);
 
-        1. Can receive friend requests. (Toggle)
-        2. Gets a notification when receiving a request. (Toggle)
-        3. Gets a notification when friend jumping online. (DropDown)
-          a. Never
-          b. Only favorites
-          c. All friends
-
-        */
-
-        # Needs to add the createCustomForm method in the lib.
+            # Creating a new order request to update user settings.
+            $order = new Order();
+            $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
+            $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
+        });
+        $ui->setTitle(Translation::Translate('ui.main.title'));
+        $ui->addToggle(Translation::Translate('ui.settings.toggle.notify'));
+        $ui->addToggle(Translation::Translate('ui.settings.toggle.request'));
+        $ui->addDropdown(Translation::Translate('ui.settings.content.notify'),
+        [
+            Translation::Translate('ui.settings.dropdown.never'),
+            Translation::Translate('ui.settings.dropdown.favorites'),
+            Translation::Translate('ui.settings.dropdown.all.friends')
+        ]);
+        $ui->sendToPlayer($player);
     }
 
     /**
@@ -126,21 +133,69 @@ class UI
      * @param int $page The current page of the player.
      * @param Friend $friend The Friend object related to the player.
      */
-    function friendsPage(Player $player, int $page, Friend $friend)
+    function friendsPage(Player $player, int $page, Friend $friend): void
+    {
+        $name = $player->getName();
+        if(!isset($this->pageContainer[$name])){
+            $this->pageContainer[$name] = ['page' => 0];
+        }
+
+        $friends = $friend->getFriends();
+        $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
+        $start = $limit * $page;
+
+        for($i = 0; $i <= $start; $i++){
+            unset($friends[$i]);
+        }
+
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend)
+        {
+            # Prepare close & next page places.
+            $nextPage = null;
+            $listCount = count($this->pageContainer[$name]['content']);
+            if($this->pageContainer[$name]['remains']){
+                $nextPage = $listCount + 1;
+            }
+            $close = $listCount + 1;
+            if($nextPage !== null){
+                $close = $nextPage + 1;
+            }
+            if($data === $nextPage){
+                $this->friendsPage($player, $this->pageContainer[$name]['page'] + 1, $friend);
+                return;
+            }
+            if($data === $close) return;
+            $this->selectedFriend($player, $friend, $data);
+        });
+        $ui->setTitle(Translation::Translate('ui.main.title'));
+
+        $remains = true;
+        for($i = 0; $i < $limit; $i++){
+            if(isset($friends[$i])){
+                $ui->addButton($friends[$i]);
+            }else{
+                $remains = false;
+                break;
+            }
+        }
+        if($remains){
+            $ui->addButton(Translation::Translate('ui.button.next'));
+        }
+        $this->pageContainer[$name]['content'] = $friends;
+        $this->pageContainer[$name]['remains'] = $remains;
+        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->sendToPlayer($player);
+    }
+
+    function selectedFriend(Player $player, Friend $friend, string $selectedFriend): void
     {
         /*
-        Format for the friendsPage UI.
-        1. friend_01
-        2. friend_02
-        3. friend_03
-        4. friend_04
-        5. Next page (If friends-by-page limit was set to 4.)
-        6. Close
-
-        If Next page clicked, calls friendsPage($player, $page + 1)
+         Format for the selectedFriend UI.
+        1. Set as favorite
+        2. Block
+        3. Remove
+        5. Close
          */
-
-
     }
 
     /**
@@ -148,7 +203,7 @@ class UI
      * @param Player $player The player that receives the UI.
      * @param Friend $friend The Friend object related to the player.
      */
-    function helpPage(Player $player, Friend $friend)
+    function helpPage(Player $player, Friend $friend): void
     {
         /*
         Format for the helpPage UI.
@@ -166,7 +221,7 @@ class UI
      * @param array|null $options The options of the event.
      * @param Friend $friend The Friend object related to the player.
      */
-    function confirmationPage(Player $player, int $event, Friend $friend, array $options = null)
+    function confirmationPage(Player $player, int $event, Friend $friend, array $options = null): void
     {
 
     }

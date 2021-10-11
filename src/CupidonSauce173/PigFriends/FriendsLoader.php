@@ -30,7 +30,6 @@ class FriendsLoader extends PluginBase
 
     public Volatile $container;
 
-
     function onEnable()
     {
         $this->api = new FriendAPI();

@@ -82,7 +82,8 @@ class DatabaseProvider
         CREATE TABLE IF NOT EXISTS FriendSettings(
            player VARCHAR(15) NOT NULL,
            request_state BOOLEAN NOT NULL DEFAULT TRUE,
-           notify_state BOOLEAN NOT NULL DEFAULT FALSE
+           notify_state BOOLEAN NOT NULL DEFAULT FALSE,
+           join_message INT NOT NULL DEFAULT 0
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $db->close();
