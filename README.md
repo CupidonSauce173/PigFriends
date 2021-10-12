@@ -189,6 +189,7 @@ This class is the multi-thread base of the plugin, it will take case of creating
 ```php
 $order = new Order();
 $order->setCall(MultiFunctionThread::CUSTOM_QUERY);
+$order->isSQL(true);
 $order->setInputs([
   'UPDATE FriendSettings SET request_state = ? WHERE player = ?',
   'is',
