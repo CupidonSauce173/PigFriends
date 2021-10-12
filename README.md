@@ -184,16 +184,17 @@ When the server starts, it will schedule a repeating task (with a timer that you
 
 ### MultiFunctionThread Class
 
-This class is the multi-thread base of the plugin, it will take case of creating / deleting requests, remove friends, add / remove favorites and pretty much everything that is related to MySQL. You can also send over your custom queries via MultiFunctionThread::CUSTOM_QUERY (note that you will need to supply in the $inputs the query (args[0]) and the other data if necessary (args[1]). Here is an example of how to call the CUSTOM_QUERY function.
+This class is the multi-thread base of the plugin, it will take case of creating / deleting requests, remove friends, add / remove favorites and pretty much everything that is related to MySQL. You can also send over your custom queries via MultiFunctionThread::CUSTOM_QUERY (note that you will need to supply in the $inputs the query (args[0]) and the other data if necessary (args[1]). In order to execute a function in the MultiFunctionThread class, you must create a new order object and then execute it. Here's an example on how to call the CUSTOM_QUERY method.
 
 ```php
-$inputs = [
-    'SELECT id FROM FriendRequests WHERE player = ?',
-    ['player' => $friend],
-    $dbInfo
-];
-$multiFunctionThread = new MultiFunctionThread(MultiFunctionThread::CUSTOM_QUERY, $inputs);
-$multiFunctionThread->Start() && $multiFunctionThread->Join();
+$order = new Order();
+$order->setCall(MultiFunctionThread::CUSTOM_QUERY);
+$order->setInputs([
+  'UPDATE FriendSettings SET request_state = ? WHERE player = ?',
+  'is',
+  'CupidonSauce173'
+]);
+$order->execute();
 ```
 
 Note that this will never return something, so don't try to select things, only insert, delete or modify as you need.
