@@ -9,7 +9,8 @@ class ModalForm extends Form
     /**
      * @param callable|null $callable
      */
-    function __construct(?callable $callable) {
+    function __construct(?callable $callable)
+    {
         parent::__construct($callable);
         $this->data['type'] = 'modal';
         $this->data['title'] = '';
@@ -21,56 +22,64 @@ class ModalForm extends Form
     /**
      * @param string $title
      */
-    function setTitle(string $title) : void {
+    function setTitle(string $title): void
+    {
         $this->data['title'] = $title;
     }
 
     /**
      * @return string
      */
-    function getTitle() : string {
+    function getTitle(): string
+    {
         return $this->data['title'];
     }
 
     /**
      * @return string
      */
-    function getContent() : string {
+    function getContent(): string
+    {
         return $this->data['content'];
     }
 
     /**
      * @param string $content
      */
-    function setContent(string $content) : void {
+    function setContent(string $content): void
+    {
         $this->data['content'] = $content;
     }
 
     /**
      * @param string $text
      */
-    function setButton1(string $text) : void {
+    function setButton1(string $text): void
+    {
         $this->data['button1'] = $text;
     }
 
     /**
      * @return string
      */
-    function getButton1() : string {
+    function getButton1(): string
+    {
         return $this->data['button1'];
     }
 
     /**
      * @param string $text
      */
-    function setButton2(string $text) : void {
+    function setButton2(string $text): void
+    {
         $this->data['button2'] = $text;
     }
 
     /**
      * @return string
      */
-    function getButton2() : string {
+    function getButton2(): string
+    {
         return $this->data['button2'];
     }
 }

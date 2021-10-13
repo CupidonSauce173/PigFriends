@@ -33,8 +33,7 @@ class UI
      */
     function mainUI(Player $player): void
     {
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data)
-        {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) {
             if ($data === null) return;
             $friend = FriendsLoader::getInstance()->api->getFriendPlayer($player->getName());
 
@@ -74,10 +73,9 @@ class UI
     function addPage(Player $player, Friend $friend): void
     {
         # Needs to add the createCustomForm method in the lib.
-        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend)
-        {
-            if($data[0] == null) return;
-            if(isset($friend->getRequests()[$data[0]])){
+        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
+            if ($data[0] == null) return;
+            if (isset($friend->getRequests()[$data[0]])) {
                 $player->sendMessage(Translation::Translate('error.already.sent', ['target' => $data[0]]));
                 return;
             }
@@ -103,8 +101,7 @@ class UI
      */
     function settingsPage(Player $player, Friend $friend): void
     {
-        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend)
-        {
+        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
             # Process data.
             $friend->setNotifyState($data[0]);
             $friend->setRequestState($data[1]);
@@ -119,11 +116,11 @@ class UI
         $ui->addToggle(Translation::Translate('ui.settings.toggle.notify'));
         $ui->addToggle(Translation::Translate('ui.settings.toggle.request'));
         $ui->addDropdown(Translation::Translate('ui.settings.content.notify'),
-        [
-            Translation::Translate('ui.settings.dropdown.never'),
-            Translation::Translate('ui.settings.dropdown.favorites'),
-            Translation::Translate('ui.settings.dropdown.all.friends')
-        ]);
+            [
+                Translation::Translate('ui.settings.dropdown.never'),
+                Translation::Translate('ui.settings.dropdown.favorites'),
+                Translation::Translate('ui.settings.dropdown.all.friends')
+            ]);
         $ui->sendToPlayer($player);
     }
 
@@ -136,7 +133,7 @@ class UI
     function friendsPage(Player $player, int $page, Friend $friend): void
     {
         $name = $player->getName();
-        if(!isset($this->pageContainer[$name])){
+        if (!isset($this->pageContainer[$name])) {
             $this->pageContainer[$name] = ['page' => 0];
         }
 
@@ -144,41 +141,40 @@ class UI
         $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
         $start = $limit * $page;
 
-        for($i = 0; $i <= $start; $i++){
+        for ($i = 0; $i <= $start; $i++) {
             unset($friends[$i]);
         }
 
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend)
-        {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend) {
             # Prepare close & next page places.
             $nextPage = null;
             $listCount = count($this->pageContainer[$name]['content']);
-            if($this->pageContainer[$name]['remains']){
+            if ($this->pageContainer[$name]['remains']) {
                 $nextPage = $listCount + 1;
             }
             $close = $listCount + 1;
-            if($nextPage !== null){
+            if ($nextPage !== null) {
                 $close = $nextPage + 1;
             }
-            if($data === $nextPage){
+            if ($data === $nextPage) {
                 $this->friendsPage($player, $this->pageContainer[$name]['page'] + 1, $friend);
                 return;
             }
-            if($data === $close) return;
+            if ($data === $close) return;
             $this->selectedFriend($player, $friend, $data);
         });
         $ui->setTitle(Translation::Translate('ui.main.title'));
 
         $remains = true;
-        for($i = 0; $i < $limit; $i++){
-            if(isset($friends[$i])){
+        for ($i = 0; $i < $limit; $i++) {
+            if (isset($friends[$i])) {
                 $ui->addButton($friends[$i]);
-            }else{
+            } else {
                 $remains = false;
                 break;
             }
         }
-        if($remains){
+        if ($remains) {
             $ui->addButton(Translation::Translate('ui.button.next'));
         }
         $this->pageContainer[$name]['content'] = $friends;
@@ -187,15 +183,84 @@ class UI
         $ui->sendToPlayer($player);
     }
 
+    /**
+     * Page to show options for the selected friend from the friendsPage UI.
+     * @param Player $player
+     * @param Friend $friend
+     * @param string $selectedFriend
+     */
     function selectedFriend(Player $player, Friend $friend, string $selectedFriend): void
     {
-        /*
-         Format for the selectedFriend UI.
-        1. Set as favorite
-        2. Block
-        3. Remove
-        5. Close
-         */
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $selectedFriend) {
+            switch ($data) {
+                case 0:
+                    # Set friend as favorite
+                    if ($friend->isFavorite($selectedFriend)) {
+                        $this->confirmationPage($player, self::UNSET_FAVORITE, $friend, [$selectedFriend]);
+                        break;
+                    }
+                    $this->confirmationPage($player, self::SET_FAVORITE, $friend, [$selectedFriend]);
+                    break;
+                case 1:
+                    # Block friend
+                    $this->confirmationPage($player, self::BLOCK_PLAYER, $friend, [$selectedFriend]);
+                    break;
+                case 2:
+                    # Remove friend
+                    $this->confirmationPage($player, self::REMOVE_FRIEND, $friend, [$selectedFriend]);
+                    break;
+                case 3:
+                    return;
+            }
+        });
+        $ui->setTitle($selectedFriend);
+        $ui->addButton(Translation::Translate('ui.button.set.favorite'));
+        $ui->addButton(Translation::Translate('ui.button.block'));
+        $ui->addButton(Translation::Translate('ui.button.remove'));
+        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->sendToPlayer($player);
+    }
+
+    /**
+     * Confirmation page for multiple types of events.
+     * @param Player $player The player that receives the UI.
+     * @param int $event The event of the confirmation.
+     * @param array|null $options The options of the event.
+     * @param Friend $friend The Friend object related to the player.
+     */
+    function confirmationPage(Player $player, int $event, Friend $friend, array $options = null): void
+    {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $event, $options) {
+            switch ($data) {
+                case 0:
+                    $order = new Order();
+                    switch ($event) {
+                        case self::SET_FAVORITE:
+                            $order->setCall(MultiFunctionThread::ADD_FAVORITE);
+                            $order->setInputs([$player->getName(), $options[0]]);
+                            break;
+                        case self::UNSET_FAVORITE:
+                            $order->setCall(MultiFunctionThread::REMOVE_FAVORITE);
+                            $order->setInputs([$player->getName(), $options[0]]);
+                            break;
+                        case self::REMOVE_FRIEND:
+                            $order->setCall(MultiFunctionThread::REMOVE_FRIEND);
+                            $order->setInputs([$player->getName(), $options[0]]);
+                            break;
+                        case self::BLOCK_PLAYER:
+                            $order->setCall(MultiFunctionThread::BLOCK_PLAYER);
+                            $order->setInputs([$player->getName(), $options[0]]);
+                            break;
+                    }
+                    $order->execute();
+                    break;
+                case 1:
+                    break;
+            }
+        });
+        $ui->addButton(Translation::Translate('ui.button.confirmation'));
+        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->sendToPlayer($player);
     }
 
     /**
@@ -212,17 +277,5 @@ class UI
         3. Player preferences.
         4. Requests.
          */
-    }
-
-    /**
-     * Confirmation page for multiple types of events.
-     * @param Player $player The player that receives the UI.
-     * @param int $event The event of the confirmation.
-     * @param array|null $options The options of the event.
-     * @param Friend $friend The Friend object related to the player.
-     */
-    function confirmationPage(Player $player, int $event, Friend $friend, array $options = null): void
-    {
-
     }
 }

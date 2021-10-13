@@ -28,3 +28,14 @@ friend-per-page: 10
 
 # Request check delay (in seconds)
 request-check-time: 2
+
+# Friendly fire (true = can hit friends, false = can't hit friends)
+friendly-fire: true
+
+# Soft-depends
+
+# PigNotify Feature.
+pig-notify: false
+
+# Commando Feature (for registering sub-commands on client-side).
+commando: false

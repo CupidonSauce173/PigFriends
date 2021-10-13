@@ -85,6 +85,14 @@ class DatabaseProvider
            notify_state BOOLEAN NOT NULL DEFAULT FALSE,
            join_message INT NOT NULL DEFAULT 0
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
+        ' . '
+        CREATE TABLE IF NOT EXISTS FriendsConfigs(
+            sector VARCHAR(255) NOT NULL,
+            notify BOOLEAN NOT NULL,
+            permission BOOLEAN NOT NULL,
+            request_check_time INT NOT NULL,
+            friend_hits BOOLEAN NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $db->close();
     }

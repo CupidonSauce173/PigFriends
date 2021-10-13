@@ -28,6 +28,8 @@ class MultiFunctionThread extends Thread
     const CUSTOM_QUERY = 6;
     const CREATE_FRIEND_ENTITY = 7;
     const UPDATE_USER_SETTINGS = 8;
+    const BLOCK_PLAYER = 9;
+    const UNBLOCK_PLAYER = 10;
 
     private Volatile $container;
 
@@ -75,24 +77,10 @@ class MultiFunctionThread extends Thread
             $inputs = (array)$order->getInputs();
             unset($this->container['multiFunctionQueue'][$order]);
             switch ($order->getCall()) {
-                case self::REFUSE_REQUEST:
-                    $this->refuseRequest($inputs[0]);
-                    break;
-                case self::ACCEPT_REQUEST:
-                    $this->acceptRequest($inputs[0], $inputs[1]);
-                    break;
-                case self::SEND_NEW_REQUEST:
-                    $this->sendNewRequest($inputs[0], $inputs[1]);
-                    break;
                 case self::REMOVE_FRIEND:
                     $this->removeFriend($inputs[0], $inputs[1]);
                     break;
-                case self::ADD_FAVORITE:
-                    $this->addFavorite($inputs[0], $inputs[1]);
-                    break;
-                case self::REMOVE_FAVORITE:
-                    $this->removeFavorite($inputs[0], $inputs[1]);
-                    break;
+                # Utils field
                 case self::CUSTOM_QUERY:
                     $this->customQuery($inputs[0], $inputs[1]);
                     break;
@@ -101,6 +89,30 @@ class MultiFunctionThread extends Thread
                     break;
                 case self::UPDATE_USER_SETTINGS:
                     $this->updateUserSettings($inputs[0], $inputs[1]);
+                    break;
+                # Favorite field.
+                case self::ADD_FAVORITE:
+                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::ADD_FAVORITE);
+                    break;
+                case self::REMOVE_FAVORITE:
+                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::REMOVE_FAVORITE);
+                    break;
+                # Blocking field.
+                case self::BLOCK_PLAYER:
+                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::BLOCK_PLAYER);
+                    break;
+                case self::UNBLOCK_PLAYER:
+                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::UNBLOCK_PLAYER);
+                    break;
+                # Request field.
+                case self::REFUSE_REQUEST:
+                    $this->refuseRequest($inputs[0]);
+                    break;
+                case self::ACCEPT_REQUEST:
+                    $this->acceptRequest($inputs[0], $inputs[1]);
+                    break;
+                case self::SEND_NEW_REQUEST:
+                    $this->sendNewRequest($inputs[0], $inputs[1]);
                     break;
             }
         }
@@ -112,6 +124,20 @@ class MultiFunctionThread extends Thread
      * @param array $data
      */
     function customQuery(string $query, array $data): void
+    {
+        /*
+         * TODO: Implement this.
+         */
+    }
+
+    function addRemoveFavorite(string $sender, string $target, int $option): void
+    {
+        /*
+         * TODO: Implement this.
+         */
+    }
+
+    function blockUnblockPlayer(string $sender, string $target, int $option): void
     {
         /*
          * TODO: Implement this.
@@ -281,29 +307,5 @@ class MultiFunctionThread extends Thread
         $query = $this->db->prepare($string);
         $query->bind_param('ss', $target, $sender);
         $query->execute();
-    }
-
-    /**
-     * Will add a player to the favorite list of the sender in the MySQL server.
-     * @param string $sender
-     * @param string $target
-     */
-    function addFavorite(string $sender, string $target): void
-    {
-        /*
-         * TODO: Implement this.
-         */
-    }
-
-    /**
-     * Will remove a player from the favorite list of the sender in the MySQL server.
-     * @param string $sender
-     * @param string $target
-     */
-    function removeFavorite(string $sender, string $target): void
-    {
-        /*
-         * TODO: Implement this.
-         */
     }
 }

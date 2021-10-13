@@ -19,7 +19,8 @@ class FormAPI
      * @param callable|null $function
      * @return CustomForm
      */
-    public function createCustomForm(?callable $function = null) : CustomForm {
+    public function createCustomForm(?callable $function = null): CustomForm
+    {
         return new CustomForm($function);
     }
 
@@ -27,7 +28,8 @@ class FormAPI
      * @param callable|null $function
      * @return ModalForm
      */
-    public function createModalForm(?callable $function = null) : ModalForm {
+    public function createModalForm(?callable $function = null): ModalForm
+    {
         return new ModalForm($function);
     }
 }

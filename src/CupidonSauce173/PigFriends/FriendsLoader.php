@@ -95,11 +95,11 @@ class FriendsLoader extends PluginBase
     }
 
     /**
-     * @return FriendsLoader
+     * @return void
      */
-    function onLoad(): FriendsLoader
+    function onLoad(): void
     {
-        return self::$instance;
+        self::$instance = $this;
     }
 
     /**

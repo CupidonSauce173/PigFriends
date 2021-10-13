@@ -5,6 +5,7 @@ namespace CupidonSauce173\PigFriends;
 use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 
+use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -27,5 +28,10 @@ class EventsListener implements Listener
     {
         $index = array_search($event->getPlayer()->getName(), FriendsLoader::getInstance()->container['players']);
         unset(FriendsLoader::getInstance()->container['players'][$index]);
+    }
+
+    function onHit(EntityDamageEvent $event)
+    {
+
     }
 }

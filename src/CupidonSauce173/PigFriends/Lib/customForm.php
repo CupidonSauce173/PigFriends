@@ -9,15 +9,17 @@ class customForm extends Form
     /**
      * @param callable|null $callable
      */
-    function __construct(?callable $callable) {
+    function __construct(?callable $callable)
+    {
         parent::__construct($callable);
         $this->data['type'] = 'custom_form';
         $this->data['title'] = '';
         $this->data['content'] = [];
     }
 
-    function processData(&$data) : void {
-        if(is_array($data)) {
+    function processData(&$data): void
+    {
+        if (is_array($data)) {
             $new = [];
             foreach ($data as $i => $v) {
                 $new[$this->labelMap[$i]] = $v;
@@ -29,14 +31,16 @@ class customForm extends Form
     /**
      * @param string $title
      */
-    function setTitle(string $title) : void {
+    function setTitle(string $title): void
+    {
         $this->data['title'] = $title;
     }
 
     /**
      * @return string
      */
-    function getTitle() : string {
+    function getTitle(): string
+    {
         return $this->data['title'];
     }
 
@@ -44,7 +48,8 @@ class customForm extends Form
      * @param string $text
      * @param string|null $label
      */
-    function addLabel(string $text, ?string $label = null) : void {
+    function addLabel(string $text, ?string $label = null): void
+    {
         $this->addContent(['type' => 'label', 'text' => $text]);
         $this->labelMap[] = $label ?? count($this->labelMap);
     }
@@ -54,9 +59,10 @@ class customForm extends Form
      * @param bool|null $default
      * @param string|null $label
      */
-    function addToggle(string $text, bool $default = null, ?string $label = null) : void {
+    function addToggle(string $text, bool $default = null, ?string $label = null): void
+    {
         $content = ['type' => 'toggle', 'text' => $text];
-        if($default !== null) {
+        if ($default !== null) {
             $content['default'] = $default;
         }
         $this->addContent($content);
@@ -71,12 +77,13 @@ class customForm extends Form
      * @param int $default
      * @param string|null $label
      */
-    function addSlider(string $text, int $min, int $max, int $step = -1, int $default = -1, ?string $label = null) : void {
+    function addSlider(string $text, int $min, int $max, int $step = -1, int $default = -1, ?string $label = null): void
+    {
         $content = ['type' => 'slider', 'text' => $text, 'min' => $min, 'max' => $max];
-        if($step !== -1) {
+        if ($step !== -1) {
             $content['step'] = $step;
         }
-        if($default !== -1) {
+        if ($default !== -1) {
             $content['default'] = $default;
         }
         $this->addContent($content);
@@ -89,9 +96,10 @@ class customForm extends Form
      * @param int $defaultIndex
      * @param string|null $label
      */
-    function addStepSlider(string $text, array $steps, int $defaultIndex = -1, ?string $label = null) : void {
+    function addStepSlider(string $text, array $steps, int $defaultIndex = -1, ?string $label = null): void
+    {
         $content = ['type' => 'step_slider', 'text' => $text, 'steps' => $steps];
-        if($defaultIndex !== -1) {
+        if ($defaultIndex !== -1) {
             $content['default'] = $defaultIndex;
         }
         $this->addContent($content);
@@ -104,7 +112,8 @@ class customForm extends Form
      * @param int|null $default
      * @param string|null $label
      */
-    function addDropdown(string $text, array $options, int $default = null, ?string $label = null) : void {
+    function addDropdown(string $text, array $options, int $default = null, ?string $label = null): void
+    {
         $this->addContent(['type' => 'dropdown', 'text' => $text, 'options' => $options, 'default' => $default]);
         $this->labelMap[] = $label ?? count($this->labelMap);
     }
@@ -115,7 +124,8 @@ class customForm extends Form
      * @param string|null $default
      * @param string|null $label
      */
-    function addInput(string $text, string $placeholder = '', string $default = null, ?string $label = null) : void {
+    function addInput(string $text, string $placeholder = '', string $default = null, ?string $label = null): void
+    {
         $this->addContent(['type' => 'input', 'text' => $text, 'placeholder' => $placeholder, 'default' => $default]);
         $this->labelMap[] = $label ?? count($this->labelMap);
     }
@@ -123,7 +133,8 @@ class customForm extends Form
     /**
      * @param array $content
      */
-    private function addContent(array $content) : void {
+    private function addContent(array $content): void
+    {
         $this->data['content'][] = $content;
     }
 }

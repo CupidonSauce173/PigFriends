@@ -23,6 +23,14 @@ class Friend
     const ONLY_FAVORITES = 1;
     const NOBODY = 2;
 
+    function isFavorite(string $friend): bool
+    {
+        if(array_search($friend, $this->favorites) !== false){
+            return true;
+        }
+        return false;
+    }
+
     function getJoinSetting(): int
     {
         return $this->joinMessage;
@@ -57,6 +65,7 @@ class Friend
      * Sets the player settings directly from the query.
      * @param bool $requestState
      * @param bool $notifyState
+     * @param bool $joinMessage
      */
     function setRawSettings(bool $requestState, bool $notifyState, bool $joinMessage): void
     {
