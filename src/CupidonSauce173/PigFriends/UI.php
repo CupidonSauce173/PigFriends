@@ -234,6 +234,9 @@ class UI
             switch ($data) {
                 case 0:
                     $order = new Order();
+                    /*
+                     * TODO: Add local-process for each of them.
+                     */
                     switch ($event) {
                         case self::SET_FAVORITE:
                             $order->setCall(MultiFunctionThread::ADD_FAVORITE);
@@ -252,6 +255,7 @@ class UI
                             $order->setInputs([$player->getName(), $options[0]]);
                             break;
                     }
+                    $order->isSQL(true);
                     $order->execute();
                     break;
                 case 1:
