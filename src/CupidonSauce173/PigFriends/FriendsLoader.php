@@ -32,9 +32,6 @@ class FriendsLoader extends PluginBase
 
     function onEnable()
     {
-        $this->api = new FriendAPI();
-        $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
-
         # Verification of the config files.
         if (!file_exists($this->getDataFolder() . 'config.yml')) {
             $this->saveResource('config.yml');
@@ -48,7 +45,13 @@ class FriendsLoader extends PluginBase
             $this->getLogger()->error('Wrong permission settings. Please do not put any special characters.');
             $this->getServer()->shutdown();
         }
-
+        if($config->get('development') === true){
+            $this->getLogger()->warning('PigFriends is under development, please remove this plugin in order to start the server.');
+            $this->getServer()->shutdown();
+            return;
+        }
+        $this->api = new FriendAPI();
+        $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
         new DatabaseProvider();
 
         # Register the commands

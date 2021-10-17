@@ -39,3 +39,6 @@ pig-notify: false
 
 # Commando Feature (for registering sub-commands on client-side).
 commando: false
+
+# NEVER CHANGE THIS SETTING.
+development: true
