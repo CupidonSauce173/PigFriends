@@ -33,22 +33,6 @@ abstract class Form implements IForm
     }
 
     /**
-     * @return callable|null
-     */
-    function getCallable(): ?callable
-    {
-        return $this->callable;
-    }
-
-    /**
-     * @param callable|null $callable
-     */
-    function setCallable(?callable $callable)
-    {
-        $this->callable = $callable;
-    }
-
-    /**
      * @param Player $player
      * @param mixed $data
      */
@@ -64,6 +48,22 @@ abstract class Form implements IForm
     function processData(&$data): void
     {
 
+    }
+
+    /**
+     * @return callable|null
+     */
+    function getCallable(): ?callable
+    {
+        return $this->callable;
+    }
+
+    /**
+     * @param callable|null $callable
+     */
+    function setCallable(?callable $callable)
+    {
+        $this->callable = $callable;
     }
 
     function jsonSerialize()

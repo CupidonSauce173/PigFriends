@@ -4,28 +4,25 @@
 namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
-
 use function strtolower;
 
 class Friend
 {
+    const ALL_FRIENDS = 0;
+    const ONLY_FAVORITES = 1;
+    const NOBODY = 2;
     private array $friends = [];
     private array $favorites = [];
     private array $blocked = [];
     private array $requestSent = [];
     private string $player;
-
     private bool $notifyState;
     private bool $requestState;
     private int $joinMessage;
 
-    const ALL_FRIENDS = 0;
-    const ONLY_FAVORITES = 1;
-    const NOBODY = 2;
-
     function isFavorite(string $friend): bool
     {
-        if(array_search($friend, $this->favorites) !== false){
+        if (array_search($friend, $this->favorites) !== false) {
             return true;
         }
         return false;
@@ -46,14 +43,14 @@ class Friend
         return $this->notifyState;
     }
 
-    function getRequestState(): bool
-    {
-        return $this->requestState;
-    }
-
     function setNotifyState(bool $state): void
     {
         $this->notifyState = $state;
+    }
+
+    function getRequestState(): bool
+    {
+        return $this->requestState;
     }
 
     function setRequestState(bool $state): void
@@ -107,7 +104,7 @@ class Friend
      */
     function removeRequestSent(string $value): void
     {
-        if(!isset($this->requestSent[$value])) return;
+        if (!isset($this->requestSent[$value])) return;
         unset($this->requestSent[$value]);
     }
 

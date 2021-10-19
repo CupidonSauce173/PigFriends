@@ -14,6 +14,14 @@ class Request
     private bool $accepted;
 
     /**
+     * @return int|null
+     */
+    function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    /**
      * @param int $id
      */
     function setId(int $id): void
@@ -22,11 +30,11 @@ class Request
     }
 
     /**
-     * @return int|null
+     * @return string|null
      */
-    function getId(): ?int
+    function getTarget(): ?string
     {
-        return $this->id;
+        return $this->target;
     }
 
     /**
@@ -40,9 +48,9 @@ class Request
     /**
      * @return string|null
      */
-    function getTarget(): ?string
+    function getSender(): ?string
     {
-        return $this->target;
+        return $this->sender;
     }
 
     /**
@@ -54,11 +62,11 @@ class Request
     }
 
     /**
-     * @return string|null
+     * @return DateTime
      */
-    function getSender(): ?string
+    function getCreationDate(): DateTime
     {
-        return $this->sender;
+        return $this->creationDate;
     }
 
     /**
@@ -67,14 +75,6 @@ class Request
     function setCreationDate(DateTime $dateTime): void
     {
         $this->creationDate = $dateTime;
-    }
-
-    /**
-     * @return DateTime
-     */
-    function getCreationDate(): DateTime
-    {
-        return $this->creationDate;
     }
 
     /**

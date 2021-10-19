@@ -6,7 +6,6 @@ namespace CupidonSauce173\PigFriends\Utils;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\FriendsLoader;
-
 use function str_replace;
 
 class Translation

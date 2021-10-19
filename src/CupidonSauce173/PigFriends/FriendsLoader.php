@@ -5,19 +5,16 @@ namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
-use CupidonSauce173\PigFriends\Utils\FriendAPI;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
-
+use CupidonSauce173\PigFriends\Utils\FriendAPI;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
-
 use Thread;
 use Volatile;
-
-use function file_exists;
 use function array_map;
-use function preg_match;
+use function file_exists;
 use function parse_ini_file;
+use function preg_match;
 
 class FriendsLoader extends PluginBase
 {
@@ -29,6 +26,14 @@ class FriendsLoader extends PluginBase
     public Thread $multiFunctionThread;
 
     public Volatile $container;
+
+    /**
+     * @return FriendsLoader
+     */
+    public static function getInstance(): self
+    {
+        return self::$instance;
+    }
 
     function onEnable()
     {
@@ -45,7 +50,7 @@ class FriendsLoader extends PluginBase
             $this->getLogger()->error('Wrong permission settings. Please do not put any special characters.');
             $this->getServer()->shutdown();
         }
-        if($config->get('development') === true){
+        if ($config->get('development') === true) {
             $this->getLogger()->warning('PigFriends is under development, please remove this plugin in order to start the server.');
             $this->getServer()->shutdown();
             return;
@@ -103,13 +108,5 @@ class FriendsLoader extends PluginBase
     function onLoad(): void
     {
         self::$instance = $this;
-    }
-
-    /**
-     * @return FriendsLoader
-     */
-    public static function getInstance(): self
-    {
-        return self::$instance;
     }
 }

@@ -7,20 +7,18 @@ use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Translation;
-
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat as TF;
-
-use function strtolower;
-use function array_shift;
 use function array_search;
-use function round;
+use function array_shift;
 use function count;
 use function is_int;
+use function round;
+use function strtolower;
 
 class Commands extends Command implements PluginIdentifiableCommand
 {

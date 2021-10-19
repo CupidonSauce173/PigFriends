@@ -4,7 +4,6 @@ namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
-
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;

@@ -5,17 +5,15 @@ namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
-
-use Thread;
 use mysqli;
+use Thread;
 use Volatile;
-
-use function var_dump;
-use function microtime;
-use function implode;
-use function str_repeat;
 use function array_fill;
 use function count;
+use function implode;
+use function microtime;
+use function str_repeat;
+use function var_dump;
 
 class MultiFunctionThread extends Thread
 {
@@ -119,6 +117,27 @@ class MultiFunctionThread extends Thread
     }
 
     /**
+     * Will remove a friend of a player in the MySQL server.
+     * @param string $sender
+     * @param string $target
+     */
+    function removeFriend(string $sender, string $target): void
+    {
+        $string = "DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?";
+
+        # Deleting base relation base_player -> friend.
+        $query = $this->db->prepare($string);
+        $query->bind_param('ss', $sender, $target);
+        $query->execute();
+        $query->close();
+
+        # Deleting second relation friend -> base_player.
+        $query = $this->db->prepare($string);
+        $query->bind_param('ss', $target, $sender);
+        $query->execute();
+    }
+
+    /**
      * Will send over a query to the MySQL server.
      * @param string $query
      * @param array $data
@@ -128,37 +147,6 @@ class MultiFunctionThread extends Thread
         /*
          * TODO: Implement this.
          */
-    }
-
-    function addRemoveFavorite(string $sender, string $target, int $option): void
-    {
-        /*
-         * TODO: Implement this.
-         */
-    }
-
-    function blockUnblockPlayer(string $sender, string $target, int $option): void
-    {
-        /*
-         * TODO: Implement this.
-         */
-    }
-
-    /**
-     * @param string $player
-     * @param array $data
-     */
-    function updateUserSettings(string $player, array $data): void
-    {
-        # Preparing values
-        $n = $data[0];
-        $r = $data[1];
-        $j = $data[2];
-
-        # Updating user settings in MySQL.
-        $query = $this->db->prepare("UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?");
-        $query->bind_param('iiis', $n, $r, $j, $player);
-        $query->execute();
     }
 
     /**
@@ -236,6 +224,37 @@ class MultiFunctionThread extends Thread
     }
 
     /**
+     * @param string $player
+     * @param array $data
+     */
+    function updateUserSettings(string $player, array $data): void
+    {
+        # Preparing values
+        $n = $data[0];
+        $r = $data[1];
+        $j = $data[2];
+
+        # Updating user settings in MySQL.
+        $query = $this->db->prepare("UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?");
+        $query->bind_param('iiis', $n, $r, $j, $player);
+        $query->execute();
+    }
+
+    function addRemoveFavorite(string $sender, string $target, int $option): void
+    {
+        /*
+         * TODO: Implement this.
+         */
+    }
+
+    function blockUnblockPlayer(string $sender, string $target, int $option): void
+    {
+        /*
+         * TODO: Implement this.
+         */
+    }
+
+    /**
      * Will delete the request from the MySQL server.
      * @param int $requestId
      */
@@ -286,26 +305,5 @@ class MultiFunctionThread extends Thread
         $query->bind_param('ss', $author, $target);
         $query->execute();
         $query->close();
-    }
-
-    /**
-     * Will remove a friend of a player in the MySQL server.
-     * @param string $sender
-     * @param string $target
-     */
-    function removeFriend(string $sender, string $target): void
-    {
-        $string = "DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?";
-
-        # Deleting base relation base_player -> friend.
-        $query = $this->db->prepare($string);
-        $query->bind_param('ss', $sender, $target);
-        $query->execute();
-        $query->close();
-
-        # Deleting second relation friend -> base_player.
-        $query = $this->db->prepare($string);
-        $query->bind_param('ss', $target, $sender);
-        $query->execute();
     }
 }

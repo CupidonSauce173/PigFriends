@@ -4,19 +4,17 @@
 namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Request;
-
-use Thread;
-use Volatile;
-use mysqli;
 use DateTime;
 use Exception;
-
-use function implode;
-use function str_repeat;
+use mysqli;
+use Thread;
+use Volatile;
 use function array_fill;
 use function count;
-use function var_dump;
+use function implode;
 use function microtime;
+use function str_repeat;
+use function var_dump;
 
 class RequestThread extends Thread
 {

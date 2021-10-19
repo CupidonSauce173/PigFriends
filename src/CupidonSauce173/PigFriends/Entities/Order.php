@@ -31,15 +31,6 @@ class Order
     }
 
     /**
-     * Method to set the inputs of the order (data), must be an array.
-     * @param array $inputs
-     */
-    function setInputs(array $inputs): void
-    {
-        $this->inputs = $inputs;
-    }
-
-    /**
      * Method to set the event that the order will request in the MultiFunctionThread.
      * @param int $event
      */
@@ -64,5 +55,14 @@ class Order
     function getInputs(): array
     {
         return $this->inputs;
+    }
+
+    /**
+     * Method to set the inputs of the order (data), must be an array.
+     * @param array $inputs
+     */
+    function setInputs(array $inputs): void
+    {
+        $this->inputs = $inputs;
     }
 }

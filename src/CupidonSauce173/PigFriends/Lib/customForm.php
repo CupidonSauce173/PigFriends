@@ -55,6 +55,14 @@ class customForm extends Form
     }
 
     /**
+     * @param array $content
+     */
+    private function addContent(array $content): void
+    {
+        $this->data['content'][] = $content;
+    }
+
+    /**
      * @param string $text
      * @param bool|null $default
      * @param string|null $label
@@ -128,13 +136,5 @@ class customForm extends Form
     {
         $this->addContent(['type' => 'input', 'text' => $text, 'placeholder' => $placeholder, 'default' => $default]);
         $this->labelMap[] = $label ?? count($this->labelMap);
-    }
-
-    /**
-     * @param array $content
-     */
-    private function addContent(array $content): void
-    {
-        $this->data['content'][] = $content;
     }
 }

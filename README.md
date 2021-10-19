@@ -7,7 +7,8 @@
 
 ### Known Issues
 
-- **Not ready to be used, I didn't even put it in a testing server yet, I didn't finish to write everything I want before starting debugging and fixing all that mess of a code lol**
+- **Not ready to be used, I didn't even put it in a testing server yet, I didn't finish writing everything I want
+  before starting debugging and fixing all that mess of a code lol**
 - **This page is also outdated, I'll update it when I'm nearly done with the plugin.**
 
 | **Feature**                 | **State** | 
@@ -26,7 +27,9 @@
 
 ### Introduction
 
-This is a simple yet complete friends system where players are allowed to create a list of friends, set favorites and later, send them customizable gifts with all data stored in a MySQL server. The plugin contains a simple API if you want to create third-party addons. This is a part of the Pigraid Network System.
+This is a simple yet complete friends system where players are allowed to create a list of friends, set favorites and
+later, send them customizable gifts with all data stored in a MySQL server. The plugin contains a simple API if you want
+to create third-party addons. This is a part of the Pigraid Network System.
 
 ### FriendPlayer Object
 
@@ -65,7 +68,6 @@ $friend->addFriend($target);
 $friend->removeFriend($target);
 ```
 
-
 ### Request Object
 
 | **Property** | **DataType** | **Description** |
@@ -101,8 +103,11 @@ $request->isAccepted(); # Returns Boolean.
 ```
 
 ### Config File
- 
-The configuration file allows you to modify pretty much any aspect of the plugin. You can set the command you want, and it's aliases, the permission and if the players needs the permission to use the command. You can also set the delays between checks from the database for new requests. Here's the list of settings you're allowed to change from the config file.
+
+The configuration file allows you to modify pretty much any aspect of the plugin. You can set the command you want, and
+it's aliases, the permission and if the players needs the permission to use the command. You can also set the delays
+between checks from the database for new requests. Here's the list of settings you're allowed to change from the config
+file.
 
 ```yml
 # Config for the friends command.
@@ -139,9 +144,10 @@ request-check-time: 2
 
 ### API
 
-The plugin offers a small and simple API that you can use along the requests and FriendPlayer methods. Here are all the methods from the API.
+The plugin offers a small and simple API that you can use along the requests and FriendPlayer methods. Here are all the
+methods from the API.
 
-First, you need to register the API. 
+First, you need to register the API.
 
 ```php
 
@@ -159,17 +165,20 @@ Then, you can use the API like you wish.
 # Get Friend object by name.
 $api->getFriendPlayerByName($target); # Returns Friend or null (if didn't find anyone with that name online).
 
-# Get FrienddPlayer object by PMMP Player.
+# Get Friend Player object by PMMP Player.
 $api->getFriendPlayer($target); # Returns Friend or null (if didn't find any Friend with the supplied PMMP Player object).
-# Quick note, if this method returns null, it probably means that the Friend object is still being created and you should try again, even if a player has no friend, it will create a Friend object.
+# Quick note, if this method returns null, it probably means that the Friend object is still being created, and you should try again, even if a player has no friend, it will create a Friend object.
 ```
 
 ### How it works?
 
-When the server starts, it will schedule a repeating task (with a timer that you can set in the config file) to check new requests, when creating a new request, it will not register it in the server, it will send it over the MySQL server and the CheckRequestTask thread will detect it and then create a new request object and display it to the player if they are online. For now, requests are scheduled to be destroyed after 24 hours of being created, the CheckRequestTask thread will also take care of this.
+When the server starts, it will schedule a repeating task (with a timer that you can set in the config file) to check
+new requests, when creating a new request, it will not register it in the server, it will send it over the MySQL server
+and the CheckRequestTask thread will detect it and then create a new request object and display it to the player if they
+are online. For now, requests are scheduled to be destroyed after 24 hours of being created, the CheckRequestTask thread
+will also take care of this.
 
 ### Command List
-
 
 | **Name** | **Description** |
 | ------------ | :---------- |
@@ -180,11 +189,15 @@ When the server starts, it will schedule a repeating task (with a timer that you
 | /f favorite set (target) | Set a friend as favorite.
 | /f favorite unset (target) | Unset a friend as favorite.
 | /f list (page) | Opens a list of your friends (chat message).
-| /f help | Opens an UI with all the explaination on how the plugin works.
+| /f help | Opens an UI with all the explanation on how the plugin works.
 
 ### MultiFunctionThread Class
 
-This class is the multi-thread base of the plugin, it will take case of creating / deleting requests, remove friends, add / remove favorites and pretty much everything that is related to MySQL. You can also send over your custom queries via MultiFunctionThread::CUSTOM_QUERY (note that you will need to supply in the $inputs the query (args[0]) and the other data if necessary (args[1]). In order to execute a function in the MultiFunctionThread class, you must create a new order object and then execute it. Here's an example on how to call the CUSTOM_QUERY method.
+This class is the multi-thread base of the plugin, it will take case of creating / deleting requests, remove friends,
+add / remove favorites and pretty much everything that is related to MySQL. You can also send over your custom queries
+via MultiFunctionThread::CUSTOM_QUERY (note that you will need to supply in the $inputs the query (args[0]) and the
+other data if necessary (args[1])). In order to execute a function in the MultiFunctionThread class, you must create a
+new order object and then execute it. Here's an example on how to call the CUSTOM_QUERY method.
 
 ```php
 $order = new Order();
@@ -202,10 +215,14 @@ Note that this will never return something, so don't try to select things, only 
 
 ### Translation Class
 
-Simple class to translate messages from the langKeys.ini. You can call it via Translation::Translate($messageIndex, $keys); Will return null or a string.
+Simple class to translate messages from the langKeys.ini. You can call it via Translation::Translate($messageIndex,
+$keys); Will return null or a string.
 
 ### Future features
 
-- Implementation of the PigNotify plugin (as soft-depend) to create a new notification when a player receives a friend request or get their request accepted. 
+- Implementation of the PigNotify plugin (as soft-depend) to create a new notification when a player receives a friend
+  request or get their request accepted.
 - Implementation of a gift system where players can send gifts (that the owner would set in a gift.yml file).
-- Player settings, this feature is already somewhat implemented-ish (only in the database) but basically, players will be able to block all incoming requests, notifications, enable / disable a message that would be sent to them if a player jumps online and more.
+- Player settings, this feature is already somewhat implemented-ish (only in the database) but basically, players will
+  be able to block all incoming requests, notifications, enable / disable a message that would be sent to them if a
+  player jumps online and more.

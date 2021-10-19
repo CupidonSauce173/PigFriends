@@ -4,7 +4,6 @@
 namespace CupidonSauce173\PigFriends\Utils;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
-
 use mysqli;
 
 class DatabaseProvider
@@ -50,7 +49,7 @@ class DatabaseProvider
          * ---> RelationState <---
          * Will hold the state of the relations from FriendRelations, to know if the player has been set as favorite
          * or as blocked (yes, this table handle the blocked players (when a player blocks a player from sending them
-         * friend requests.
+         * friend requests)).
          *
          * ---> FriendSettings Table <---
          * Will store the settings of the player.

@@ -8,7 +8,6 @@ use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Lib\FormAPI;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Translation;
-
 use pocketmine\Player;
 
 class UI
@@ -91,36 +90,6 @@ class UI
         });
         $ui->setTitle(Translation::Translate('ui.main.title'));
         $ui->addInput(Translation::Translate('ui.addPage.input'));
-        $ui->sendToPlayer($player);
-    }
-
-    /**
-     * Settings page where the player can change few personal settings.
-     * @param Player $player The player that receives the UI.
-     * @param Friend $friend The Friend object related to the player.
-     */
-    function settingsPage(Player $player, Friend $friend): void
-    {
-        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
-            # Process data.
-            $friend->setNotifyState($data[0]);
-            $friend->setRequestState($data[1]);
-            $friend->setJoinSetting($data[2]);
-
-            # Creating a new order request to update user settings.
-            $order = new Order();
-            $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
-            $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
-        });
-        $ui->setTitle(Translation::Translate('ui.main.title'));
-        $ui->addToggle(Translation::Translate('ui.settings.toggle.notify'));
-        $ui->addToggle(Translation::Translate('ui.settings.toggle.request'));
-        $ui->addDropdown(Translation::Translate('ui.settings.content.notify'),
-            [
-                Translation::Translate('ui.settings.dropdown.never'),
-                Translation::Translate('ui.settings.dropdown.favorites'),
-                Translation::Translate('ui.settings.dropdown.all.friends')
-            ]);
         $ui->sendToPlayer($player);
     }
 
@@ -264,6 +233,36 @@ class UI
         });
         $ui->addButton(Translation::Translate('ui.button.confirmation'));
         $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->sendToPlayer($player);
+    }
+
+    /**
+     * Settings page where the player can change few personal settings.
+     * @param Player $player The player that receives the UI.
+     * @param Friend $friend The Friend object related to the player.
+     */
+    function settingsPage(Player $player, Friend $friend): void
+    {
+        $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
+            # Process data.
+            $friend->setNotifyState($data[0]);
+            $friend->setRequestState($data[1]);
+            $friend->setJoinSetting($data[2]);
+
+            # Creating a new order request to update user settings.
+            $order = new Order();
+            $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
+            $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
+        });
+        $ui->setTitle(Translation::Translate('ui.main.title'));
+        $ui->addToggle(Translation::Translate('ui.settings.toggle.notify'));
+        $ui->addToggle(Translation::Translate('ui.settings.toggle.request'));
+        $ui->addDropdown(Translation::Translate('ui.settings.content.notify'),
+            [
+                Translation::Translate('ui.settings.dropdown.never'),
+                Translation::Translate('ui.settings.dropdown.favorites'),
+                Translation::Translate('ui.settings.dropdown.all.friends')
+            ]);
         $ui->sendToPlayer($player);
     }
 
