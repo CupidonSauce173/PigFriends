@@ -7,7 +7,7 @@ use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Lib\FormAPI;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
-use CupidonSauce173\PigFriends\Utils\Translation;
+use CupidonSauce173\PigFriends\Utils\Utils;
 use pocketmine\Player;
 
 class UI
@@ -54,13 +54,13 @@ class UI
             }
         });
 
-        $ui->setTitle(Translation::Translate('ui.main.title'));
-        $ui->setContent(Translation::Translate('ui.main.content'));
-        $ui->addButton(Translation::Translate('ui.button.add.friend'));
-        $ui->addButton(Translation::Translate('ui.button.friends'));
-        $ui->addButton(Translation::Translate('ui.button.settings'));
-        $ui->addButton(Translation::Translate('ui.button.help'));
-        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->setTitle(Utils::Translate('ui.main.title'));
+        $ui->setContent(Utils::Translate('ui.main.content'));
+        $ui->addButton(Utils::Translate('ui.button.add.friend'));
+        $ui->addButton(Utils::Translate('ui.button.friends'));
+        $ui->addButton(Utils::Translate('ui.button.settings'));
+        $ui->addButton(Utils::Translate('ui.button.help'));
+        $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
 
@@ -75,7 +75,7 @@ class UI
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
             if ($data[0] == null) return;
             if (isset($friend->getRequests()[$data[0]])) {
-                $player->sendMessage(Translation::Translate('error.already.sent', ['target' => $data[0]]));
+                $player->sendMessage(Utils::Translate('error.already.sent', ['target' => $data[0]]));
                 return;
             }
 
@@ -86,10 +86,10 @@ class UI
             $order->setInputs([$player->getName(), $data[0]]);
             $order->execute();
 
-            $player->sendMessage(Translation::Translate('utils.request.sent', ['target' => $data[0]]));
+            $player->sendMessage(Utils::Translate('utils.request.sent', ['target' => $data[0]]));
         });
-        $ui->setTitle(Translation::Translate('ui.main.title'));
-        $ui->addInput(Translation::Translate('ui.addPage.input'));
+        $ui->setTitle(Utils::Translate('ui.main.title'));
+        $ui->addInput(Utils::Translate('ui.addPage.input'));
         $ui->sendToPlayer($player);
     }
 
@@ -132,7 +132,7 @@ class UI
             if ($data === $close) return;
             $this->selectedFriend($player, $friend, $data);
         });
-        $ui->setTitle(Translation::Translate('ui.main.title'));
+        $ui->setTitle(Utils::Translate('ui.main.title'));
 
         $remains = true;
         for ($i = 0; $i < $limit; $i++) {
@@ -144,11 +144,11 @@ class UI
             }
         }
         if ($remains) {
-            $ui->addButton(Translation::Translate('ui.button.next'));
+            $ui->addButton(Utils::Translate('ui.button.next'));
         }
         $this->pageContainer[$name]['content'] = $friends;
         $this->pageContainer[$name]['remains'] = $remains;
-        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
 
@@ -183,10 +183,10 @@ class UI
             }
         });
         $ui->setTitle($selectedFriend);
-        $ui->addButton(Translation::Translate('ui.button.set.favorite'));
-        $ui->addButton(Translation::Translate('ui.button.block'));
-        $ui->addButton(Translation::Translate('ui.button.remove'));
-        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->addButton(Utils::Translate('ui.button.set.favorite'));
+        $ui->addButton(Utils::Translate('ui.button.block'));
+        $ui->addButton(Utils::Translate('ui.button.remove'));
+        $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
 
@@ -231,8 +231,8 @@ class UI
                     break;
             }
         });
-        $ui->addButton(Translation::Translate('ui.button.confirmation'));
-        $ui->addButton(Translation::Translate('ui.button.close'));
+        $ui->addButton(Utils::Translate('ui.button.confirmation'));
+        $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
 
@@ -254,14 +254,14 @@ class UI
             $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
             $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
         });
-        $ui->setTitle(Translation::Translate('ui.main.title'));
-        $ui->addToggle(Translation::Translate('ui.settings.toggle.notify'));
-        $ui->addToggle(Translation::Translate('ui.settings.toggle.request'));
-        $ui->addDropdown(Translation::Translate('ui.settings.content.notify'),
+        $ui->setTitle(Utils::Translate('ui.main.title'));
+        $ui->addToggle(Utils::Translate('ui.settings.toggle.notify'));
+        $ui->addToggle(Utils::Translate('ui.settings.toggle.request'));
+        $ui->addDropdown(Utils::Translate('ui.settings.content.notify'),
             [
-                Translation::Translate('ui.settings.dropdown.never'),
-                Translation::Translate('ui.settings.dropdown.favorites'),
-                Translation::Translate('ui.settings.dropdown.all.friends')
+                Utils::Translate('ui.settings.dropdown.never'),
+                Utils::Translate('ui.settings.dropdown.favorites'),
+                Utils::Translate('ui.settings.dropdown.all.friends')
             ]);
         $ui->sendToPlayer($player);
     }

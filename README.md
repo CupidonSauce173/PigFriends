@@ -215,7 +215,7 @@ Note that this will never return something, so don't try to select things, only 
 
 ### Translation Class
 
-Simple class to translate messages from the langKeys.ini. You can call it via Translation::Translate($messageIndex,
+Simple class to translate messages from the langKeys.ini. You can call it via Utils::Translate($messageIndex,
 $keys); Will return null or a string.
 
 ### Future features

@@ -123,16 +123,14 @@ class MultiFunctionThread extends Thread
      */
     function removeFriend(string $sender, string $target): void
     {
-        $string = "DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?";
-
         # Deleting base relation base_player -> friend.
-        $query = $this->db->prepare($string);
+        $query = $this->db->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
         $query->bind_param('ss', $sender, $target);
         $query->execute();
         $query->close();
 
         # Deleting second relation friend -> base_player.
-        $query = $this->db->prepare($string);
+        $query = $this->db->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
         $query->bind_param('ss', $target, $sender);
         $query->execute();
     }
@@ -157,7 +155,7 @@ class MultiFunctionThread extends Thread
         # This whole process could be only one or two query, but I need to think more about it.
 
         # Prepare & Execute query for the player settings.
-        $query = $this->db->prepare("SELECT (request_state, notify_state, join_message) FROM FriendSettings WHERE player = ?");
+        $query = $this->db->prepare('SELECT (request_state, notify_state, join_message) FROM FriendSettings WHERE player = ?');
         $query->bind_param('s', $player);
         $query->execute();
 
@@ -173,7 +171,7 @@ class MultiFunctionThread extends Thread
         $query->close();
 
         # Prepare & Execute query for relations related to the player.
-        $query = $this->db->prepare("SELECT (id, friend, reg_date) FROM FriendRelation WHERE base_player = ?");
+        $query = $this->db->prepare('SELECT (id, friend, reg_date) FROM FriendRelation WHERE base_player = ?');
         $query->bind_param('s', $player);
         $query->execute();
 
@@ -235,7 +233,7 @@ class MultiFunctionThread extends Thread
         $j = $data[2];
 
         # Updating user settings in MySQL.
-        $query = $this->db->prepare("UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?");
+        $query = $this->db->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?');
         $query->bind_param('iiis', $n, $r, $j, $player);
         $query->execute();
     }
@@ -260,7 +258,7 @@ class MultiFunctionThread extends Thread
      */
     function refuseRequest(int $requestId): void
     {
-        $query = $this->db->prepare("DELETE FROM FriendRequests WHERE id = ?");
+        $query = $this->db->prepare('DELETE FROM FriendRequests WHERE id = ?');
         $query->bind_param('i', $requestId);
         $query->execute();
         $query->close();
@@ -274,21 +272,19 @@ class MultiFunctionThread extends Thread
     function acceptRequest(string $player, array $requestData): void
     {
         # Deleting the friend request.
-        $query = $this->db->prepare("DELETE FROM FriendRequests WHERE id = ?");
+        $query = $this->db->prepare('DELETE FROM FriendRequests WHERE id = ?');
         $query->bind_param('i', $requestData['id']);
         $query->execute();
         $query->close();
 
-        $string = "INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)";
-
         # Creating first relation base_player -> friend.
-        $query = $this->db->prepare($string);
+        $query = $this->db->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
         $query->bind_param('ss', $player, $requestData['friend']);
         $query->execute();
         $query->close();
 
         # Creating second relation friend -> base_player.
-        $query = $this->db->prepare($string);
+        $query = $this->db->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
         $query->bind_param('ss', $requestData['friend'], $player);
         $query->execute();
         $query->close();
@@ -301,7 +297,7 @@ class MultiFunctionThread extends Thread
      */
     function sendNewRequest(string $author, string $target): void
     {
-        $query = $this->db->prepare("INSERT INTO FriendRequests (sender,receiver) VALUES (?,?)");
+        $query = $this->db->prepare('INSERT INTO FriendRequests (sender,receiver) VALUES (?,?)');
         $query->bind_param('ss', $author, $target);
         $query->execute();
         $query->close();

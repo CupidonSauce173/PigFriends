@@ -8,7 +8,7 @@ use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\FriendsLoader;
 use function str_replace;
 
-class Translation
+class Utils
 {
     /**
      * Will translate a langKey from the langKey.ini to a readable message for the players.
@@ -25,10 +25,7 @@ class Translation
         }
         return $text;
     }
-}
 
-class FriendAPI
-{
     /**
      * Gets a Friend object from a username
      * @param string $target

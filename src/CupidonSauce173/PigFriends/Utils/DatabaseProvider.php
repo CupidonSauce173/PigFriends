@@ -5,10 +5,11 @@ namespace CupidonSauce173\PigFriends\Utils;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
 use mysqli;
+use Volatile;
 
 class DatabaseProvider
 {
-    private array $sqlInfo;
+    private Volatile $sqlInfo;
 
     /**
      * DatabaseProvider constructor.

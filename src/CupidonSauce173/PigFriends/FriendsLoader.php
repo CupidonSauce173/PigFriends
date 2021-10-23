@@ -6,7 +6,7 @@ namespace CupidonSauce173\PigFriends;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
-use CupidonSauce173\PigFriends\Utils\FriendAPI;
+use CupidonSauce173\PigFriends\Utils\Utils;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use Thread;
@@ -19,7 +19,7 @@ use function preg_match;
 class FriendsLoader extends PluginBase
 {
     public static FriendsLoader $instance;
-    public FriendAPI $api;
+    public Utils $api;
 
     # Threaded field
     public Thread $requestThread;
@@ -46,7 +46,9 @@ class FriendsLoader extends PluginBase
         }
 
         $config = new Config($this->getDataFolder() . 'config.yml', Config::YAML);
-        if (preg_match('/[^A-Za-z-.]/', $this->container['configs']['permission'])) {
+        $this->initThreadField($config);
+
+        if (preg_match('/[^A-Za-z-.]/', $this->container['config']['permission'])) {
             $this->getLogger()->error('Wrong permission settings. Please do not put any special characters.');
             $this->getServer()->shutdown();
         }
@@ -55,14 +57,14 @@ class FriendsLoader extends PluginBase
             $this->getServer()->shutdown();
             return;
         }
-        $this->api = new FriendAPI();
+
+        $this->api = new Utils();
         $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
+
         new DatabaseProvider();
 
         # Register the commands
         $this->getServer()->getCommandMap()->register('PigFriends', new Commands());
-
-        $this->initThreadField($config);
     }
 
     /**

@@ -6,7 +6,7 @@ namespace CupidonSauce173\PigFriends;
 use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
-use CupidonSauce173\PigFriends\Utils\Translation;
+use CupidonSauce173\PigFriends\Utils\Utils;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
@@ -26,13 +26,13 @@ class Commands extends Command implements PluginIdentifiableCommand
 
     function __construct()
     {
-        parent::__construct(FriendsLoader::getInstance()->container['configs']['friends'],
-            Translation::Translate('message.command.description'),
-            '/' . FriendsLoader::getInstance()->container['configs']['command-main'],
-            FriendsLoader::getInstance()->container['configs']['command.aliases']
+        parent::__construct(FriendsLoader::getInstance()->container['config']['friends'],
+            Utils::Translate('message.command.description'),
+            '/' . FriendsLoader::getInstance()->container['config']['command-main'],
+            FriendsLoader::getInstance()->container['config']['command.aliases']
         );
-        if (FriendsLoader::getInstance()->container['configs']['use-permission']) {
-            $this->setPermission(('PigFriends.' . FriendsLoader::getInstance()->container['configs']['permission']));
+        if (FriendsLoader::getInstance()->container['config']['use-permission']) {
+            $this->setPermission(('PigFriends.' . FriendsLoader::getInstance()->container['config']['permission']));
         }
 
         $this->ui = new UI();
@@ -45,9 +45,9 @@ class Commands extends Command implements PluginIdentifiableCommand
      */
     function execute(CommandSender $sender, string $commandLabel, array $args): void
     {
-        if (FriendsLoader::getInstance()->container['configs']['use-permission']) {
+        if (FriendsLoader::getInstance()->container['config']['use-permission']) {
             if (!$sender->hasPermission($this->getPermission())) {
-                $sender->sendMessage(Translation::Translate('error.command.no.permission'));
+                $sender->sendMessage(Utils::Translate('error.command.no.permission'));
                 return;
             }
         }
@@ -62,13 +62,13 @@ class Commands extends Command implements PluginIdentifiableCommand
         switch ($args[0]) {
             case 'add':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = $args[1];
                 foreach ($friend->getFriends() as $pFriend) {
                     if (strtolower($pFriend) == strtolower($target)) {
-                        $sender->sendMessage(Translation::Translate('error.already.friend', ['friend' => $target]));
+                        $sender->sendMessage(Utils::Translate('error.already.friend', ['friend' => $target]));
                         break;
                     }
                     $order = new Order();
@@ -84,29 +84,29 @@ class Commands extends Command implements PluginIdentifiableCommand
                 break;
             case 'remove':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = $args[1];
                 foreach ($friend->getFriends() as $pFriend) {
                     if (strtolower($pFriend) == strtolower($target)) {
                         $friend->removeFriend(strtolower($target));
-                        $sender->sendMessage(Translation::Translate('utils.friend.removed', ['friend' => $target]));
+                        $sender->sendMessage(Utils::Translate('utils.friend.removed', ['friend' => $target]));
                         break;
                     }
-                    $sender->sendMessage(Translation::Translate('error.not.friend', ['friend' => $target]));
+                    $sender->sendMessage(Utils::Translate('error.not.friend', ['friend' => $target]));
                     break;
                 }
                 break;
             case 'accept':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 $requests = $friend->getRequests();
                 if ($requests == null) {
-                    $sender->sendMessage(Translation::Translate('error.no.requests', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('error.no.requests', ['target' => $target]));
                     break;
                 }
                 /** @var Request $request */
@@ -121,19 +121,19 @@ class Commands extends Command implements PluginIdentifiableCommand
                         FriendsLoader::getInstance()->container['mysql-data']
                     ]);
                     $order->execute();
-                    $sender->sendMessage(Translation::Translate('utils.request.accepted', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('utils.request.accepted', ['target' => $target]));
                     break;
                 }
                 break;
             case 'refuse':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 $requests = $friend->getRequests();
                 if ($requests == null) {
-                    $sender->sendMessage(Translation::Translate('no.requests', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('no.requests', ['target' => $target]));
                     break;
                 }
                 /** @var Request $request */
@@ -148,25 +148,25 @@ class Commands extends Command implements PluginIdentifiableCommand
                         FriendsLoader::getInstance()->container['mysql-data']
                     ]);
                     $order->execute();
-                    $sender->sendMessage(Translation::Translate('utils.request.refused', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('utils.request.refused', ['target' => $target]));
                     break;
                 }
                 break;
             case 'list':
                 $friends = $friend->getFriends();
                 $count = count($friends);
-                $maxPerPage = FriendsLoader::getInstance()->container['configs']['friend-per-page'];
+                $maxPerPage = FriendsLoader::getInstance()->container['config']['friend-per-page'];
                 $pages = round($count / $maxPerPage);
                 if (isset($args[1])) {
                     if (is_int((int)$args[1])) {
                         if ($pages > (int)$args[1]) {
-                            $sender->sendMessage(Translation::Translate('error.page.not.found', ['selectedPage' => (int)$args[1]]));
+                            $sender->sendMessage(Utils::Translate('error.page.not.found', ['selectedPage' => (int)$args[1]]));
                             break;
                         } else {
                             for ($pass = (int)$args[1] * $maxPerPage; $pass === 0; $pass--) {
                                 array_shift($friends);
                             }
-                            $sender->sendMessage(Translation::Translate('friend.list.title'));
+                            $sender->sendMessage(Utils::Translate('friend.list.title'));
                             foreach ($friends as $f) {
                                 if (FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null) {
                                     $sender->sendMessage(TF::GREEN . $f);
@@ -174,7 +174,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                                     $sender->sendMessage(TF::RED . $f);
                                 }
                             }
-                            $sender->sendMessage(Translation::Translate('command.remaining.pages',
+                            $sender->sendMessage(Utils::Translate('command.remaining.pages',
                                 [
                                     'currentPage' => $pages - 1,
                                     'totalPages' => $pages
@@ -182,7 +182,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         }
                     }
                 } else {
-                    $sender->sendMessage(Translation::Translate('friend.list.title'));
+                    $sender->sendMessage(Utils::Translate('friend.list.title'));
                     $i = 0;
                     foreach ($friends as $f) {
                         if ($i == $maxPerPage) return;
@@ -193,7 +193,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         }
                         $i++;
                     }
-                    $sender->sendMessage(Translation::Translate('command.remaining.pages',
+                    $sender->sendMessage(Utils::Translate('command.remaining.pages',
                         [
                             'currentPage' => $pages - 1,
                             'totalPages' => $pages
@@ -202,33 +202,33 @@ class Commands extends Command implements PluginIdentifiableCommand
                 break;
             case 'block':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 if (array_search($target, $friend->getBlocked())) {
-                    $sender->sendMessage(Translation::Translate('error.already.blocked', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('error.already.blocked', ['target' => $target]));
                     break;
                 }
                 $friend->blockPlayer($target);
-                $sender->sendMessage(Translation::Translate('utils.player.blocked', ['target' => $target]));
+                $sender->sendMessage(Utils::Translate('utils.player.blocked', ['target' => $target]));
                 break;
             case 'unblock':
                 if (!isset($args[1])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 $target = strtolower($args[1]);
                 if (!array_search($target, $friend->getBlocked())) {
-                    $sender->sendMessage(Translation::Translate('error.not.blocked', ['target' => $target]));
+                    $sender->sendMessage(Utils::Translate('error.not.blocked', ['target' => $target]));
                     break;
                 }
                 $friend->unblockPlayer($target);
-                $sender->sendMessage(Translation::Translate('utils.player.unblocked', ['target' => $target]));
+                $sender->sendMessage(Utils::Translate('utils.player.unblocked', ['target' => $target]));
                 break;
             case 'favorite':
                 if (!isset($args[1]) or !isset($args[2])) {
-                    $sender->sendMessage(Translation::Translate('error.bad.args'));
+                    $sender->sendMessage(Utils::Translate('error.bad.args'));
                     break;
                 }
                 switch ($args[1]) {
