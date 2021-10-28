@@ -46,6 +46,8 @@ class FriendsLoader extends PluginBase
         }
 
         $config = new Config($this->getDataFolder() . 'config.yml', Config::YAML);
+        new DatabaseProvider($config->get('mysql-data'));
+
         $this->initThreadField($config);
 
         if (preg_match('/[^A-Za-z-.]/', $this->container['config']['permission'])) {
@@ -60,8 +62,6 @@ class FriendsLoader extends PluginBase
 
         $this->api = new Utils();
         $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
-
-        new DatabaseProvider();
 
         # Register the commands
         $this->getServer()->getCommandMap()->register('PigFriends', new Commands());

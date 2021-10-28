@@ -26,10 +26,11 @@ class Commands extends Command implements PluginIdentifiableCommand
 
     function __construct()
     {
-        parent::__construct(FriendsLoader::getInstance()->container['config']['friends'],
+        $aliases = (array)FriendsLoader::getInstance()->container['config']['command-aliases'];
+        parent::__construct(FriendsLoader::getInstance()->container['config']['command-main'],
             Utils::Translate('message.command.description'),
             '/' . FriendsLoader::getInstance()->container['config']['command-main'],
-            FriendsLoader::getInstance()->container['config']['command.aliases']
+            $aliases
         );
         if (FriendsLoader::getInstance()->container['config']['use-permission']) {
             $this->setPermission(('PigFriends.' . FriendsLoader::getInstance()->container['config']['permission']));
