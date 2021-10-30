@@ -54,13 +54,33 @@ class DatabaseProvider
          * ---> FriendSettings Table <---
          * Will store the settings of the player.
          */
-        $db->query(
-            'CREATE TABLE IF NOT EXISTS FriendRequests(
+        $db->query('
+        CREATE TABLE IF NOT EXISTS FriendsConfigs(
+            sector VARCHAR(255) NOT NULL,
+            notify BOOLEAN NOT NULL,
+            permission BOOLEAN NOT NULL,
+            request_check_time INT NOT NULL,
+            friend_hits BOOLEAN NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
+        ');
+        $db->query('
+        CREATE TABLE IF NOT EXISTS FriendSettings(
+           player VARCHAR(15) NOT NULL,
+           request_state BOOLEAN NOT NULL DEFAULT TRUE,
+           notify_state BOOLEAN NOT NULL DEFAULT FALSE,
+           join_message INT NOT NULL DEFAULT 0,
+           PRIMARY KEY (player)
+        ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
+        ');
+        $db->query('
+        CREATE TABLE IF NOT EXISTS FriendRequests(
            id MEDIUMINT NOT NULL AUTO_INCREMENT,
            sender VARCHAR(15) NOT NULL,
            receiver VARCHAR(15) NOT NULL,
            reg_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-           PRIMARY KEY (id)
+           PRIMARY KEY (id),
+           FOREIGN KEY (sender) REFERENCES FriendSettings(player),
+           FOREIGN KEY (receiver) REFERENCES FriendSettings(player)
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $db->query('
@@ -69,7 +89,9 @@ class DatabaseProvider
            base_player VARCHAR(15) NOT NULL,
            friend VARCHAR(15) NOT NULL,
            reg_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-           PRIMARY KEY (id)
+           PRIMARY KEY (id),
+           FOREIGN KEY (base_player) REFERENCES FriendSettings(player),
+           FOREIGN KEY (friend) REFERENCES FriendSettings(player)
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $db->query('
@@ -78,23 +100,6 @@ class DatabaseProvider
            is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
            is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
            FOREIGN KEY (relation_id) REFERENCES FriendRelations(id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
-        ');
-        $db->query('
-        CREATE TABLE IF NOT EXISTS FriendSettings(
-           player VARCHAR(15) NOT NULL,
-           request_state BOOLEAN NOT NULL DEFAULT TRUE,
-           notify_state BOOLEAN NOT NULL DEFAULT FALSE,
-           join_message INT NOT NULL DEFAULT 0
-        ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
-        ');
-        $db->query('
-        CREATE TABLE IF NOT EXISTS FriendsConfigs(
-            sector VARCHAR(255) NOT NULL,
-            notify BOOLEAN NOT NULL,
-            permission BOOLEAN NOT NULL,
-            request_check_time INT NOT NULL,
-            friend_hits BOOLEAN NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $db->close();
