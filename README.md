@@ -19,7 +19,7 @@
 | Simple API                  | 🧰 |
 | Translation System          | 🧰 |
 | Command Customization       | 🧰 |
-| Automated MySQL Constructor | 🧰 |
+| Automated MySQL Constructor | :check:|
 
 ### Prerequisites
 
