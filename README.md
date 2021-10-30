@@ -13,13 +13,15 @@
 
 | **Feature**                 | **State** | 
 | --------------------------- |:----------:|
-| MultiThreaded System        | 🧰 |
-| Friend Object         | 🧰 |
-| Request Object              | 🧰 |
+| MultiThreaded System        | ✔️ |
+| Friend Object         | ✔️ |
+| Request Object              | ✔️ |
 | Simple API                  | 🧰 |
-| Translation System          | 🧰 |
-| Command Customization       | 🧰 |
-| Automated MySQL Constructor | 🧰 |
+| Translation System          | ✔️ |
+| Command Customization       | ✔️ |
+| Automated MySQL Constructor | ✔️ |
+| Sector Feature For Configs  | ❌ |
+| Disable / Enable Friendly Fire | ❌ |
 
 ### Prerequisites
 
