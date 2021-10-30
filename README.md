@@ -7,8 +7,8 @@
 
 ### Known Issues
 
-- **Not ready to be used, I didn't even put it in a testing server yet, I didn't finish writing everything I want
-  before starting debugging and fixing all that mess of a code lol**
+- **Not ready to be used, I didn't even put it in a testing server yet, I didn't finish writing everything I want before
+  starting debugging and fixing all that mess of a code lol**
 - **This page is also outdated, I'll update it when I'm nearly done with the plugin.**
 
 | **Feature**                 | **State** | 
@@ -215,8 +215,8 @@ Note that this will never return something, so don't try to select things, only 
 
 ### Translation Class
 
-Simple class to translate messages from the langKeys.ini. You can call it via Utils::Translate($messageIndex,
-$keys); Will return null or a string.
+Simple class to translate messages from the langKeys.ini. You can call it via Utils::Translate($messageIndex, $keys);
+Will return null or a string.
 
 ### Future features
 

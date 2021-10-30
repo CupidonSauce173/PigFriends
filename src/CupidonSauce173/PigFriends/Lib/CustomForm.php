@@ -2,7 +2,7 @@
 
 namespace CupidonSauce173\PigFriends\Lib;
 
-class customForm extends Form
+class CustomForm extends Form
 {
     private array $labelMap = [];
 

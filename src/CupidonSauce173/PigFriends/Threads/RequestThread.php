@@ -45,7 +45,7 @@ class RequestThread extends Thread
 
     private function processThread(): void
     {
-        if ($this->db === null ?? $this->db->ping() === false) {
+        if (!$this->db) {
             $this->db = new mysqli(
                 $this->container['mysql-data']['ip'],
                 $this->container['mysql-data']['user'],
@@ -57,7 +57,7 @@ class RequestThread extends Thread
         # Create, prepare & execute the query.
         $clause = implode(',', array_fill(0, count($this->container['players']), '?'));
         $types = str_repeat('s', count($this->container['players']));
-        if(empty($clause) ?? empty($types)) return;
+        if (empty($clause) ?? empty($types)) return;
         $stmt = $this->db->prepare("SELECT id,sender,receiver,reg_date FROM FriendRequests WHERE receiver IN ($clause)");
         $stmt->bind_param($types, ...(array)$this->container['players']);
         $stmt->execute();

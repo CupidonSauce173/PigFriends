@@ -25,7 +25,6 @@ abstract class Form implements IForm
     /**
      * @param Player $player
      * @see Player::sendForm()
-     *
      */
     function sendToPlayer(Player $player): void
     {

@@ -165,18 +165,18 @@ class UI
                 case 0:
                     # Set friend as favorite
                     if ($friend->isFavorite($selectedFriend)) {
-                        $this->confirmationPage($player, self::UNSET_FAVORITE, $friend, [$selectedFriend]);
+                        $this->confirmationPage($player, self::UNSET_FAVORITE, [$selectedFriend]);
                         break;
                     }
-                    $this->confirmationPage($player, self::SET_FAVORITE, $friend, [$selectedFriend]);
+                    $this->confirmationPage($player, self::SET_FAVORITE, [$selectedFriend]);
                     break;
                 case 1:
                     # Block friend
-                    $this->confirmationPage($player, self::BLOCK_PLAYER, $friend, [$selectedFriend]);
+                    $this->confirmationPage($player, self::BLOCK_PLAYER, [$selectedFriend]);
                     break;
                 case 2:
                     # Remove friend
-                    $this->confirmationPage($player, self::REMOVE_FRIEND, $friend, [$selectedFriend]);
+                    $this->confirmationPage($player, self::REMOVE_FRIEND, [$selectedFriend]);
                     break;
                 case 3:
                     return;
@@ -195,11 +195,10 @@ class UI
      * @param Player $player The player that receives the UI.
      * @param int $event The event of the confirmation.
      * @param array|null $options The options of the event.
-     * @param Friend $friend The Friend object related to the player.
      */
-    function confirmationPage(Player $player, int $event, Friend $friend, array $options = null): void
+    function confirmationPage(Player $player, int $event, array $options = null): void
     {
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $event, $options) {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($event, $options) {
             switch ($data) {
                 case 0:
                     $order = new Order();

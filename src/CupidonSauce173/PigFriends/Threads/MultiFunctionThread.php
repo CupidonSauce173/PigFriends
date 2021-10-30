@@ -8,11 +8,7 @@ use CupidonSauce173\PigFriends\Entities\Order;
 use mysqli;
 use Thread;
 use Volatile;
-use function array_fill;
-use function count;
-use function implode;
 use function microtime;
-use function str_repeat;
 use function var_dump;
 
 class MultiFunctionThread extends Thread

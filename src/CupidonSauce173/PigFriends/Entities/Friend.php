@@ -60,11 +60,11 @@ class Friend
 
     /**
      * Sets the player settings directly from the query.
-     * @param bool $requestState
-     * @param bool $notifyState
-     * @param bool $joinMessage
+     * @param int $requestState
+     * @param int $notifyState
+     * @param int $joinMessage
      */
-    function setRawSettings(bool $requestState, bool $notifyState, bool $joinMessage): void
+    function setRawSettings(int $requestState, int $notifyState, int $joinMessage): void
     {
         $this->notifyState = $notifyState;
         $this->requestState = $requestState;
