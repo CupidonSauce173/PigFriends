@@ -45,7 +45,7 @@ class RequestThread extends Thread
 
     private function processThread(): void
     {
-        if (!$this->db) {
+        if (!$this->db instanceof mysqli) {
             $this->db = new mysqli(
                 $this->container['mysql-data']['ip'],
                 $this->container['mysql-data']['user'],

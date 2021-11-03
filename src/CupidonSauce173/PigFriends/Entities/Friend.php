@@ -16,8 +16,8 @@ class Friend
     private array $blocked = [];
     private array $requestSent = [];
     private string $player;
-    private bool $notifyState;
-    private bool $requestState;
+    private int $notifyState;
+    private int $requestState;
     private int $joinMessage;
 
     function isFavorite(string $friend): bool
