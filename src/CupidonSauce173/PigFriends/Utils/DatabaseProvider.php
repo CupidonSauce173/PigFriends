@@ -6,11 +6,8 @@ namespace CupidonSauce173\PigFriends\Utils;
 use CupidonSauce173\PigFriends\FriendsLoader;
 use function mysqli_close;
 use function mysqli_connect;
-use function mysqli_prepare;
 use function mysqli_query;
 use function mysqli_select_db;
-use function mysqli_stmt_bind_param;
-use function mysqli_stmt_execute;
 use function var_dump;
 
 class DatabaseProvider
