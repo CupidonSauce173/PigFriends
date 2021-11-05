@@ -16,8 +16,8 @@ class Friend
     private array $blocked = [];
     private array $requestSent = [];
     private string $player;
-    private int $notifyState;
-    private int $requestState;
+    private bool $notifyState;
+    private bool $requestState;
     private int $joinMessage;
 
     function isFavorite(string $friend): bool
@@ -60,11 +60,11 @@ class Friend
 
     /**
      * Sets the player settings directly from the query.
-     * @param int $requestState
-     * @param int $notifyState
+     * @param bool $requestState
+     * @param bool $notifyState
      * @param int $joinMessage
      */
-    function setRawSettings(int $requestState, int $notifyState, int $joinMessage): void
+    function setRawSettings(bool $requestState, bool $notifyState, int $joinMessage): void
     {
         $this->notifyState = $notifyState;
         $this->requestState = $requestState;

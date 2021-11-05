@@ -67,11 +67,15 @@ class Commands extends Command implements PluginIdentifiableCommand
                     break;
                 }
                 $target = $args[1];
+                $valid = true;
                 foreach ($friend->getFriends() as $pFriend) {
                     if (strtolower($pFriend) == strtolower($target)) {
                         $sender->sendMessage(Utils::Translate('error.already.friend', ['friend' => $target]));
+                        $valid = false;
                         break;
                     }
+                }
+                if($valid){
                     $order = new Order();
                     $order->isSQL(true);
                     $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);
@@ -80,7 +84,6 @@ class Commands extends Command implements PluginIdentifiableCommand
                         $target,
                     ]);
                     $order->execute();
-                    break;
                 }
                 break;
             case 'remove':

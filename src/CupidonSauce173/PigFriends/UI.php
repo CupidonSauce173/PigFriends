@@ -101,12 +101,16 @@ class UI
      */
     function friendsPage(Player $player, int $page, Friend $friend): void
     {
+        $friends = $friend->getFriends();
+        if(empty($friend->getFriends())){
+            $player->sendMessage(Utils::Translate('error.no.friends'));
+            return;
+        }
         $name = $player->getName();
         if (!isset($this->pageContainer[$name])) {
             $this->pageContainer[$name] = ['page' => 0];
         }
 
-        $friends = $friend->getFriends();
         $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
         $start = $limit * $page;
 
@@ -252,6 +256,9 @@ class UI
             $order = new Order();
             $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
             $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
+            $order->execute();
+
+            $player->sendMessage(Utils::Translate('utils.settings.updated'));
         });
         $ui->setTitle(Utils::Translate('ui.main.title'));
         $ui->addToggle(Utils::Translate('ui.settings.toggle.notify'));

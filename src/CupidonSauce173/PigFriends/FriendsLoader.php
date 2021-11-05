@@ -7,6 +7,7 @@ use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
 use CupidonSauce173\PigFriends\Utils\Utils;
+use CupidonSauce173\PigFriends\Tasks\OrderListenerTask;
 use Exception;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
@@ -68,6 +69,9 @@ class FriendsLoader extends PluginBase
         $this->api = new Utils();
         $this->getServer()->getPluginManager()->registerEvents(new EventsListener(), $this);
 
+        # Start tasks
+        $this->getScheduler()->scheduleRepeatingTask(new OrderListenerTask(), $this->container['config']['order-listener-task-time'] * 20);
+
         # Register the commands
         $this->getServer()->getCommandMap()->register('PigFriends', new Commands());
     }
@@ -87,6 +91,7 @@ class FriendsLoader extends PluginBase
         $this->container['mysql-data'] = [];
         $this->container['players'] = [];
         $this->container['multiFunctionQueue'] = [];
+        $this->container['orderListener'] = [];
         $this->container['runThread'] = true;
 
         # Populating container with configs, plugin folder & mysql-data & langKeys.

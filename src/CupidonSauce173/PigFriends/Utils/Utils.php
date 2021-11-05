@@ -5,6 +5,7 @@ namespace CupidonSauce173\PigFriends\Utils;
 
 
 use CupidonSauce173\PigFriends\Entities\Friend;
+use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\FriendsLoader;
 use function str_replace;
 
@@ -21,7 +22,9 @@ class Utils
         if (!isset(FriendsLoader::getInstance()->container['langKeys'][$message])) return null;
         $text = FriendsLoader::getInstance()->container['langKeys'][$message];
         if ($langKey !== null) {
-            $text = str_replace($langKey[0], $langKey[1], $text);
+            foreach($langKey as $item => $value){
+                $text = str_replace( '{' . $item . '}', $value, $text);
+            }
         }
         return $text;
     }
@@ -56,5 +59,19 @@ class Utils
         if (isset(FriendsLoader::getInstance()->container['friends'][$friend])) {
             unset(FriendsLoader::getInstance()->container['friends'][$friend]);
         }
+    }
+
+    /**
+     * @param string $author
+     * @param string $sender
+     * @return bool
+     */
+    static function requestExists(string $author, string $sender): bool
+    {
+        /** @var Request $request */
+        foreach(FriendsLoader::getInstance()->container['requests'] as $request){
+            if($request->getSender() === $author && $request->getTarget() === $sender) return true;
+        }
+        return false;
     }
 }

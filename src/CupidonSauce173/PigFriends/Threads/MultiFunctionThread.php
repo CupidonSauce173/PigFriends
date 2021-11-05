@@ -5,11 +5,15 @@ namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
+use CupidonSauce173\PigFriends\FriendsLoader;
+use CupidonSauce173\PigFriends\Utils\ListenerConstants;
 use Exception;
 use mysqli;
 use Thread;
 use Volatile;
 use function microtime;
+use function sprintf;
+use function mysqli_connect;
 
 class MultiFunctionThread extends Thread
 {
@@ -43,6 +47,7 @@ class MultiFunctionThread extends Thread
 
         include($this->container['folder'] . '\Entities\Order.php');
         include($this->container['folder'] . '\Entities\Friend.php');
+        include($this->container['folder'] . '\Utils\ListenerConstants.php');
 
         $link = mysqli_connect(
             $this->container['mysql-data']['ip'],
@@ -176,8 +181,8 @@ class MultiFunctionThread extends Thread
         $results = $stmt->get_result();
         while ($row = $results->fetch_assoc()) {
             $entity->setJoinSetting($row['join_message']);
-            $entity->setNotifyState($row['notify_state']);
-            $entity->setRequestState($row['request_state']);
+            $entity->setNotifyState((bool)$row['notify_state']);
+            $entity->setRequestState((bool)$row['request_state']);
         }
         $stmt->close();
 
@@ -226,8 +231,8 @@ class MultiFunctionThread extends Thread
     function updateUserSettings(string $player, array $data, mysqli $link): void
     {
         # Preparing values
-        $n = $data[0];
-        $r = $data[1];
+        $n = (int)$data[0];
+        $r = (int)$data[1];
         $j = $data[2];
 
         # Updating user settings in MySQL.
@@ -311,9 +316,28 @@ class MultiFunctionThread extends Thread
      */
     function sendNewRequest(string $author, string $target, mysqli $link): void
     {
-        $stmt = $link->prepare('INSERT INTO FriendRequests (sender,receiver) VALUES (?,?)');
+        $queryString =
+            sprintf("
+            INSERT INTO FriendRequests (sender,receiver)
+                 SELECT * FROM (SELECT '%s', '%s') as tmp
+                    WHERE NOT EXISTS (
+                        SELECT sender,receiver FROM FriendRequests WHERE sender = ? AND receiver = ?
+                    ) LIMIT 1;
+            ", $author, $target);
+        $stmt = $link->prepare($queryString);
         $stmt->bind_param('ss', $author, $target);
         $stmt->execute();
+
+        $order = new Order();
+        $order->isSQL(false);
+        if($stmt->affected_rows === 0){
+            $order->setCall(ListenerConstants::REQUEST_ALREADY_EXISTS);
+        }else{
+            $order->setCall(ListenerConstants::REQUEST_CREATED);
+        }
+        $order->setInputs([$author, $target]);
+        $this->container['orderListener'][$order->execute(true)] = $order;
+
         $stmt->close();
     }
 }

@@ -29,6 +29,10 @@ friend-per-page: 10
 # Request check delay (in seconds)
 request-check-time: 2
 
+# Task that checks any special state for certain actions (should be left at 1 second)
+# This task mostly just sends messages to the players after performing certain tasks.
+order-listener-task-time: 1
+
 # Friendly fire (true = can hit friends, false = can't hit friends)
 friendly-fire: true
 

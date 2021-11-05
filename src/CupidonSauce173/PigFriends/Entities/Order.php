@@ -11,15 +11,26 @@ class Order
     private int $event;
     private string $id;
 
+
     /**
      * Method to execute the order (must be called at the end).
+     * @param bool $isListener
+     * @return string|null
      */
-    function execute(): void
+    function execute(bool $isListener = false): ?string
     {
         $this->id = uniqid();
+        if($isListener){
+            return $this->id;
+        }
         FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;
+        return null;
     }
 
+    /**
+     * Method to get the ID of the order object.
+     * @return string
+     */
     function getId(): string
     {
         return $this->id;

@@ -74,7 +74,7 @@ class RequestThread extends Thread
                 $requestClass->setSender($row['sender']);
                 $requestClass->setTarget($row['receiver']);
                 $requestClass->setCreationDate($dateTime);
-                $this->container['requests'][$row['receiver']][(int)$row['id']] = $requestClass;
+                $this->container['requests'][(int)$row['id']] = $requestClass;
             } catch (Exception $e) {
                 var_dump('problem while processing row in RequestThread.');
             }
