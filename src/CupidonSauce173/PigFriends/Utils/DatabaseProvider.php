@@ -4,7 +4,6 @@
 namespace CupidonSauce173\PigFriends\Utils;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
-use function mysqli_close;
 use function mysqli_connect;
 use function mysqli_query;
 use function mysqli_select_db;
@@ -12,39 +11,36 @@ use function var_dump;
 
 class DatabaseProvider
 {
-    private array $sqlInfo;
-
     /**
      * DatabaseProvider constructor.
      */
     function __construct(array $sqlInfo)
     {
-        $this->sqlInfo = $sqlInfo;
-        $this->createDatabaseStructure();
+        $this->createDatabaseStructure($sqlInfo);
     }
 
     /**
      * Will create the database structure in MySQL.
+     * @param array $sqlInfo
      */
-    function createDatabaseStructure(): void
+    function createDatabaseStructure(array $sqlInfo): void
     {
         $link = mysqli_connect(
-            $this->sqlInfo['ip'],
-            $this->sqlInfo['user'],
-            $this->sqlInfo['password'],
+            $sqlInfo['ip'],
+            $sqlInfo['user'],
+            $sqlInfo['password'],
             null,
-            $this->sqlInfo['port']
+            $sqlInfo['port']
         );
         if ($link->connect_error) {
             FriendsLoader::getInstance()->getLogger()->error($link->connect_error);
             FriendsLoader::getInstance()->getServer()->shutdown();
         }
-        $s_db = mysqli_select_db($link, $this->sqlInfo['database']);
+        $s_db = mysqli_select_db($link, $sqlInfo['database']);
         if (!$s_db) {
-            mysqli_query($link, 'CREATE DATABASE ' . $this->sqlInfo['database']);
-            var_dump('Database ' . $this->sqlInfo['database'] . ' has been created.');
+            mysqli_query($link, 'CREATE DATABASE ' . $sqlInfo['database']);
+            var_dump('Database ' . $sqlInfo['database'] . ' has been created.');
         }
-
         mysqli_query($link, '
         CREATE TABLE IF NOT EXISTS FriendsConfigs(
             sector VARCHAR(255) NOT NULL,

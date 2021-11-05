@@ -34,8 +34,8 @@ class UI
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) {
             if ($data === null) return;
-            $friend = FriendsLoader::getInstance()->api->getFriendPlayer($player->getName());
-
+            $friend = Utils::getFriendPlayer($player->getName());
+            var_dump($friend);
             switch ($data) {
                 case 0:
                     $this->addPage($player, $friend);

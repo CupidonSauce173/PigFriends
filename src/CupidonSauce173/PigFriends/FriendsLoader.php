@@ -7,6 +7,7 @@ use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
 use CupidonSauce173\PigFriends\Utils\Utils;
+use Exception;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use Thread;
@@ -35,6 +36,9 @@ class FriendsLoader extends PluginBase
         return self::$instance;
     }
 
+    /**
+     * @throws Exception
+     */
     function onEnable()
     {
         # Verification of the config files.
@@ -46,9 +50,10 @@ class FriendsLoader extends PluginBase
         }
 
         $config = new Config($this->getDataFolder() . 'config.yml', Config::YAML);
-        new DatabaseProvider($config->get('mysql-data'));
 
         $this->initThreadField($config);
+
+        new DatabaseProvider($config->get('mysql-data'));
 
         if (preg_match('/[^A-Za-z-.]/', $this->container['config']['permission'])) {
             $this->getLogger()->error('Wrong permission settings. Please do not put any special characters.');
@@ -69,6 +74,7 @@ class FriendsLoader extends PluginBase
 
     /**
      * Method to start the different threads that the plugin will need.
+     * @throws Exception
      */
     function initThreadField(Config $config): void
     {

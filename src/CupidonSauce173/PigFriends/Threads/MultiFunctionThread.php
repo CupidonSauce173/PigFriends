@@ -5,11 +5,11 @@ namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
+use Exception;
 use mysqli;
 use Thread;
 use Volatile;
 use function microtime;
-use function var_dump;
 
 class MultiFunctionThread extends Thread
 {
@@ -27,10 +27,11 @@ class MultiFunctionThread extends Thread
 
     private Volatile $container;
 
-    private mysqli $db;
-
     # TODO: Need to create a method to insert a new row if the player doesn't exist in the database.
 
+    /**
+     * @throws Exception
+     */
     function __construct(Volatile $container)
     {
         $this->container = $container;
@@ -43,70 +44,65 @@ class MultiFunctionThread extends Thread
         include($this->container['folder'] . '\Entities\Order.php');
         include($this->container['folder'] . '\Entities\Friend.php');
 
+        $link = mysqli_connect(
+            $this->container['mysql-data']['ip'],
+            $this->container['mysql-data']['user'],
+            $this->container['mysql-data']['password'],
+            $this->container['mysql-data']['database'],
+            $this->container['mysql-data']['port']
+        );
+
         while ($this->container['runThread']) {
             if (microtime(true) >= $nextTime) {
-                $this->ProcessThread();
+                $this->ProcessThread($link);
                 $nextTime = microtime(true) + 1;
             }
         }
     }
 
-    function ProcessThread(): void
+    function ProcessThread(mysqli $link): void
     {
-
         /** @var Order $order */
         foreach ($this->container['multiFunctionQueue'] as $order) {
-            if ($order->isSQL()) {
-                if ($this->db->ping() === false) {
-                    var_dump('MySQL connection was closed. Opening it over MultiFunctionThread.');
-                    $this->db = new mysqli(
-                        $this->container['mysql-data']['ip'],
-                        $this->container['mysql-data']['user'],
-                        $this->container['mysql-data']['password'],
-                        $this->container['mysql-data']['database'],
-                        $this->container['mysql-data']['port'],
-                    );
-                }
-            }
             $inputs = (array)$order->getInputs();
-            unset($this->container['multiFunctionQueue'][$order]);
+            unset($this->container['multiFunctionQueue'][$order->getId()]);
             switch ($order->getCall()) {
                 case self::REMOVE_FRIEND:
-                    $this->removeFriend($inputs[0], $inputs[1]);
+                    $this->removeFriend($inputs[0], $inputs[1], $link);
                     break;
                 # Utils field
                 case self::CUSTOM_QUERY:
-                    $this->customQuery($inputs[0], $inputs[1]);
+                    $this->customQuery($inputs[0], $inputs[1], $link);
                     break;
                 case self::CREATE_FRIEND_ENTITY:
-                    $this->createFriendEntity($inputs[0]);
+                    $this->createFriendEntity($inputs[0], $link);
                     break;
                 case self::UPDATE_USER_SETTINGS:
-                    $this->updateUserSettings($inputs[0], $inputs[1]);
+                    $this->updateUserSettings($inputs[0], $inputs[1], $link);
                     break;
                 # Favorite field.
                 case self::ADD_FAVORITE:
-                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::ADD_FAVORITE);
+                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::ADD_FAVORITE, $link);
                     break;
                 case self::REMOVE_FAVORITE:
-                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::REMOVE_FAVORITE);
+                    $this->addRemoveFavorite($inputs[0], $inputs[1], self::REMOVE_FAVORITE, $link);
                     break;
                 # Blocking field.
                 case self::BLOCK_PLAYER:
-                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::BLOCK_PLAYER);
+                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::BLOCK_PLAYER, $link);
                     break;
                 case self::UNBLOCK_PLAYER:
-                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::UNBLOCK_PLAYER);
+                    $this->blockUnblockPlayer($inputs[0], $inputs[1], self::UNBLOCK_PLAYER, $link);
                     break;
                 # Request field.
                 case self::REFUSE_REQUEST:
-                    $this->refuseRequest($inputs[0]);
+                    $this->refuseRequest($inputs[0], $link);
                     break;
                 case self::ACCEPT_REQUEST:
-                    $this->acceptRequest($inputs[0], $inputs[1]);
+                    $this->acceptRequest($inputs[0], $inputs[1], $link);
                     break;
                 case self::SEND_NEW_REQUEST:
-                    $this->sendNewRequest($inputs[0], $inputs[1]);
+                    $this->sendNewRequest($inputs[0], $inputs[1], $link);
                     break;
             }
         }
@@ -116,27 +112,30 @@ class MultiFunctionThread extends Thread
      * Will remove a friend of a player in the MySQL server.
      * @param string $sender
      * @param string $target
+     * @param mysqli $link
      */
-    function removeFriend(string $sender, string $target): void
+    function removeFriend(string $sender, string $target, mysqli $link): void
     {
         # Deleting base relation base_player -> friend.
-        $query = $this->db->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
-        $query->bind_param('ss', $sender, $target);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
+        $stmt->bind_param('ss', $sender, $target);
+        $stmt->execute();
+        $stmt->close();
 
         # Deleting second relation friend -> base_player.
-        $query = $this->db->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
-        $query->bind_param('ss', $target, $sender);
-        $query->execute();
+        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
+        $stmt->bind_param('ss', $target, $sender);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**
      * Will send over a query to the MySQL server.
      * @param string $query
      * @param array $data
+     * @param mysqli $link
      */
-    function customQuery(string $query, array $data): void
+    function customQuery(string $query, array $data, mysqli $link): void
     {
         /*
          * TODO: Implement this.
@@ -146,8 +145,9 @@ class MultiFunctionThread extends Thread
     /**
      * Method to create the friend entity.
      * @param string $player
+     * @param mysqli $link
      */
-    function createFriendEntity(string $player): void
+    function createFriendEntity(string $player, mysqli $link): void
     {
         # Creating the friend entity.
         $entity = new Friend();
@@ -161,25 +161,25 @@ class MultiFunctionThread extends Thread
                         SELECT player FROM FriendSettings WHERE player = ?
                     ) LIMIT 1;
             ';
-        $query = $this->db->prepare($queryString);
-        $query->bind_param('s', $player);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('ss', $player, $player);
+        $stmt->execute();
+        $stmt->close();
 
         # Prepare & Execute query to get player settings.
         $queryString = "SELECT request_state, notify_state, join_message FROM FriendSettings WHERE player = ? LIMIT 1;";
-        $query = $this->db->prepare($queryString);
-        $query->bind_param('s', $player);
-        $query->execute();
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('s', $player);
+        $stmt->execute();
 
         # Process data.
-        $results = $query->get_result();
+        $results = $stmt->get_result();
         while ($row = $results->fetch_assoc()) {
             $entity->setJoinSetting($row['join_message']);
             $entity->setNotifyState($row['notify_state']);
             $entity->setRequestState($row['request_state']);
         }
-        $query->close();
+        $stmt->close();
 
         # Prepare & Execute query to get all friend relations targeted to the player.
         $queryString =
@@ -191,17 +191,17 @@ class MultiFunctionThread extends Thread
                      INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
                    ) WHERE FriendSettings.player = ?;
             ";
-        $query = $this->db->prepare($queryString);
-        $query->bind_param('s', $player);
-        $query->execute();
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('s', $player);
+        $stmt->execute();
 
         # Process data.
-        $results = $query->get_result();
+        $results = $stmt->get_result();
         $relations = [];
         while ($row = $results->fetch_assoc()) {
             $relations[] = $row;
         }
-        $query->close();
+        $stmt->close();
 
         # Creating the friends, favorites and blocked players lists.
         foreach ($relations as $relation) {
@@ -214,13 +214,16 @@ class MultiFunctionThread extends Thread
                 $entity->addFavorite($relation['friend']);
             }
         }
+
+        $this->container['friends'][] = $entity;
     }
 
     /**
      * @param string $player
      * @param array $data
+     * @param mysqli $link
      */
-    function updateUserSettings(string $player, array $data): void
+    function updateUserSettings(string $player, array $data, mysqli $link): void
     {
         # Preparing values
         $n = $data[0];
@@ -228,19 +231,32 @@ class MultiFunctionThread extends Thread
         $j = $data[2];
 
         # Updating user settings in MySQL.
-        $query = $this->db->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?');
-        $query->bind_param('iiis', $n, $r, $j, $player);
-        $query->execute();
+        $stmt = $link->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?');
+        $stmt->bind_param('iiis', $n, $r, $j, $player);
+        $stmt->execute();
+        $stmt->close();
     }
 
-    function addRemoveFavorite(string $sender, string $target, int $option): void
+    /**
+     * @param string $sender
+     * @param string $target
+     * @param int $option
+     * @param mysqli $link
+     */
+    function addRemoveFavorite(string $sender, string $target, int $option, mysqli $link): void
     {
         /*
          * TODO: Implement this.
          */
     }
 
-    function blockUnblockPlayer(string $sender, string $target, int $option): void
+    /**
+     * @param string $sender
+     * @param string $target
+     * @param int $option
+     * @param mysqli $link
+     */
+    function blockUnblockPlayer(string $sender, string $target, int $option, mysqli $link): void
     {
         /*
          * TODO: Implement this.
@@ -250,51 +266,54 @@ class MultiFunctionThread extends Thread
     /**
      * Will delete the request from the MySQL server.
      * @param int $requestId
+     * @param mysqli $link
      */
-    function refuseRequest(int $requestId): void
+    function refuseRequest(int $requestId, mysqli $link): void
     {
-        $query = $this->db->prepare('DELETE FROM FriendRequests WHERE id = ?');
-        $query->bind_param('i', $requestId);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?');
+        $stmt->bind_param('i', $requestId);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**
      * Will create a new friendship in the MySQL server and delete the request.
      * @param string $player
      * @param array $requestData
+     * @param mysqli $link
      */
-    function acceptRequest(string $player, array $requestData): void
+    function acceptRequest(string $player, array $requestData, mysqli $link): void
     {
         # Deleting the friend request.
-        $query = $this->db->prepare('DELETE FROM FriendRequests WHERE id = ?');
-        $query->bind_param('i', $requestData['id']);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?');
+        $stmt->bind_param('i', $requestData['id']);
+        $stmt->execute();
+        $stmt->close();
 
         # Creating first relation base_player -> friend.
-        $query = $this->db->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
-        $query->bind_param('ss', $player, $requestData['friend']);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
+        $stmt->bind_param('ss', $player, $requestData['friend']);
+        $stmt->execute();
+        $stmt->close();
 
         # Creating second relation friend -> base_player.
-        $query = $this->db->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
-        $query->bind_param('ss', $requestData['friend'], $player);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
+        $stmt->bind_param('ss', $requestData['friend'], $player);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**
      * Will create a new request in the MySQL server.
      * @param string $author
      * @param string $target
+     * @param mysqli $link
      */
-    function sendNewRequest(string $author, string $target): void
+    function sendNewRequest(string $author, string $target, mysqli $link): void
     {
-        $query = $this->db->prepare('INSERT INTO FriendRequests (sender,receiver) VALUES (?,?)');
-        $query->bind_param('ss', $author, $target);
-        $query->execute();
-        $query->close();
+        $stmt = $link->prepare('INSERT INTO FriendRequests (sender,receiver) VALUES (?,?)');
+        $stmt->bind_param('ss', $author, $target);
+        $stmt->execute();
+        $stmt->close();
     }
 }

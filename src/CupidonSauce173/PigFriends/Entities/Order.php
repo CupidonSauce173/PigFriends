@@ -9,13 +9,20 @@ class Order
     private bool $mysql;
     private array $inputs;
     private int $event;
+    private string $id;
 
     /**
      * Method to execute the order (must be called at the end).
      */
     function execute(): void
     {
-        FriendsLoader::getInstance()->container['multiFunctionQueue'][] = $this;
+        $this->id = uniqid();
+        FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;
+    }
+
+    function getId(): string
+    {
+        return $this->id;
     }
 
     /**

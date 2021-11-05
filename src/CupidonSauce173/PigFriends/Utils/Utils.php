@@ -31,12 +31,30 @@ class Utils
      * @param string $target
      * @return Friend|null
      */
-    function getFriendPlayer(string $target): ?Friend
+    static function getFriendPlayer(string $target): ?Friend
     {
         /** @var Friend $friend */
         foreach (FriendsLoader::getInstance()->container['friends'] as $friend) {
             if ($friend->getPlayer() === $target) return $friend;
         }
         return null;
+    }
+
+    /**
+     * @param Friend $friend
+     */
+    static function addFriendPlayer(Friend $friend): void
+    {
+        FriendsLoader::getInstance()->container['friends'][] = $friend;
+    }
+
+    /**
+     * @param Friend $friend
+     */
+    static function removeFriendPlayer(Friend $friend): void
+    {
+        if (isset(FriendsLoader::getInstance()->container['friends'][$friend])) {
+            unset(FriendsLoader::getInstance()->container['friends'][$friend]);
+        }
     }
 }
