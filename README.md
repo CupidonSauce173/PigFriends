@@ -33,7 +33,7 @@ This is a simple yet complete friends system where players are allowed to create
 later, send them customizable gifts with all data stored in a MySQL server. The plugin contains a simple API if you want
 to create third-party addons. This is a part of the Pigraid Network System.
 
-### FriendPlayer Object
+### Friend Entity
 
 | **Property** | **DataType** | **Description** |
 | ------------ | :---------- | :------------- |
