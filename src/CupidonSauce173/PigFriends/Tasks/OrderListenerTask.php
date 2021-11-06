@@ -52,7 +52,7 @@ class OrderListenerTask extends Task
     }
 
     /**
-     * Will send a confirmation message that the reqeust has been created.
+     * Will send a confirmation message that the request has been created.
      * @param string $author
      * @param string $receiver
      */

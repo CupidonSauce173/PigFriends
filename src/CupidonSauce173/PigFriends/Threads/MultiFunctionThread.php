@@ -65,6 +65,9 @@ class MultiFunctionThread extends Thread
         }
     }
 
+    /**
+     * @param mysqli $link
+     */
     function ProcessThread(mysqli $link): void
     {
         /** @var Order $order */
@@ -121,15 +124,13 @@ class MultiFunctionThread extends Thread
      */
     function removeFriend(string $sender, string $target, mysqli $link): void
     {
-        # Deleting base relation base_player -> friend.
-        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
-        $stmt->bind_param('ss', $sender, $target);
-        $stmt->execute();
-        $stmt->close();
-
-        # Deleting second relation friend -> base_player.
-        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?');
-        $stmt->bind_param('ss', $target, $sender);
+        $queryString =
+            'DELETE FROM FriendRelations 
+                WHERE (base_player = ? AND friend = ?)
+                OR    (base_player = ? AND friend = ?)
+            ';
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('ssss', $sender, $target, $target, $sender);
         $stmt->execute();
         $stmt->close();
     }
@@ -188,14 +189,14 @@ class MultiFunctionThread extends Thread
 
         # Prepare & Execute query to get all friend relations targeted to the player.
         $queryString =
-            "SELECT
+            'SELECT
               FriendRelations.id, FriendRelations.friend, FriendRelations.reg_date,
               RelationState.relation_id as state_id, RelationState.is_favorite, RelationState.is_blocked
               FROM (FriendSettings
                      INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
                      INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
                    ) WHERE FriendSettings.player = ?;
-            ";
+            ';
         $stmt = $link->prepare($queryString);
         $stmt->bind_param('s', $player);
         $stmt->execute();
@@ -224,6 +225,7 @@ class MultiFunctionThread extends Thread
     }
 
     /**
+     * Method to update the user settings.
      * @param string $player
      * @param array $data
      * @param mysqli $link
@@ -296,14 +298,8 @@ class MultiFunctionThread extends Thread
         $stmt->close();
 
         # Creating first relation base_player -> friend.
-        $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
-        $stmt->bind_param('ss', $player, $requestData['friend']);
-        $stmt->execute();
-        $stmt->close();
-
-        # Creating second relation friend -> base_player.
-        $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)');
-        $stmt->bind_param('ss', $requestData['friend'], $player);
+        $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?), (?,?)');
+        $stmt->bind_param('ssss', $player, $requestData['friend'], $requestData['friend'], $player);
         $stmt->execute();
         $stmt->close();
     }
