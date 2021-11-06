@@ -24,10 +24,10 @@ class OrderListenerTask extends Task
          * already exists.
          */
         /** @var Order $order */
-        foreach(FriendsLoader::getInstance()->container['orderListener'] as $order){
+        foreach (FriendsLoader::getInstance()->container['orderListener'] as $order) {
             $inputs = $order->getInputs();
             unset(FriendsLoader::getInstance()->container['orderListener'][$order->getId()]);
-            switch ($order->getCall()){
+            switch ($order->getCall()) {
                 case ListenerConstants::REQUEST_ALREADY_EXISTS:
                     $this->requestAlreadyExists($inputs[0], $inputs[1]);
                     break;
@@ -46,7 +46,7 @@ class OrderListenerTask extends Task
     function requestAlreadyExists(string $author, string $receiver): void
     {
         $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
-        if($player instanceof Player){
+        if ($player instanceof Player) {
             $player->sendMessage(Utils::Translate('error.already.already.sent', ['target' => $receiver]));
         }
     }
@@ -59,7 +59,7 @@ class OrderListenerTask extends Task
     function requestCreated(string $author, string $receiver): void
     {
         $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
-        if($player instanceof Player){
+        if ($player instanceof Player) {
             $player->sendMessage(Utils::Translate('utils.request.sent', ['target' => $receiver]));
         }
     }

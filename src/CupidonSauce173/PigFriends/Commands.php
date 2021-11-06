@@ -75,7 +75,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                         break;
                     }
                 }
-                if($valid){
+                if ($valid) {
                     $order = new Order();
                     $order->isSQL(true);
                     $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);

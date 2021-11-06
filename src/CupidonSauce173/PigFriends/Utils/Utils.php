@@ -5,7 +5,6 @@ namespace CupidonSauce173\PigFriends\Utils;
 
 
 use CupidonSauce173\PigFriends\Entities\Friend;
-use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\FriendsLoader;
 use function str_replace;
 
@@ -22,15 +21,15 @@ class Utils
         if (!isset(FriendsLoader::getInstance()->container['langKeys'][$message])) return null;
         $text = FriendsLoader::getInstance()->container['langKeys'][$message];
         if ($langKey !== null) {
-            foreach($langKey as $item => $value){
-                $text = str_replace( '{' . $item . '}', $value, $text);
+            foreach ($langKey as $item => $value) {
+                $text = str_replace('{' . $item . '}', $value, $text);
             }
         }
         return $text;
     }
 
     /**
-     * Gets a Friend object from a username
+     * Gets a Friend entity from a username
      * @param string $target
      * @return Friend|null
      */
@@ -44,6 +43,7 @@ class Utils
     }
 
     /**
+     * Add a friend entity to the list of friends in the container.
      * @param Friend $friend
      */
     static function addFriendPlayer(Friend $friend): void
@@ -52,6 +52,7 @@ class Utils
     }
 
     /**
+     * Remove a friend entity from the list of friends in the container.
      * @param Friend $friend
      */
     static function removeFriendPlayer(Friend $friend): void
@@ -59,19 +60,5 @@ class Utils
         if (isset(FriendsLoader::getInstance()->container['friends'][$friend])) {
             unset(FriendsLoader::getInstance()->container['friends'][$friend]);
         }
-    }
-
-    /**
-     * @param string $author
-     * @param string $sender
-     * @return bool
-     */
-    static function requestExists(string $author, string $sender): bool
-    {
-        /** @var Request $request */
-        foreach(FriendsLoader::getInstance()->container['requests'] as $request){
-            if($request->getSender() === $author && $request->getTarget() === $sender) return true;
-        }
-        return false;
     }
 }

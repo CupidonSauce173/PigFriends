@@ -76,7 +76,7 @@ class RequestThread extends Thread
                 $requestClass->setCreationDate($dateTime);
                 $this->container['requests'][(int)$row['id']] = $requestClass;
             } catch (Exception $e) {
-                var_dump('problem while processing row in RequestThread.');
+                var_dump('problem while processing row in RequestThread: ' . $e->getMessage());
             }
         }
         $stmt->close();

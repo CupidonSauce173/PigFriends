@@ -6,10 +6,10 @@ use CupidonSauce173\PigFriends\FriendsLoader;
 
 class Order
 {
-    private bool $mysql;
-    private array $inputs;
-    private int $event;
-    private string $id;
+    private ?string $id = null;
+    private bool $mysql = false;
+    private array $inputs = [];
+    private ?int $event = null;
 
 
     /**
@@ -20,7 +20,7 @@ class Order
     function execute(bool $isListener = false): ?string
     {
         $this->id = uniqid();
-        if($isListener){
+        if ($isListener) {
             return $this->id;
         }
         FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;
@@ -29,21 +29,21 @@ class Order
 
     /**
      * Method to get the ID of the order object.
-     * @return string
+     * @return ?string
      */
-    function getId(): string
+    function getId(): ?string
     {
         return $this->id;
     }
 
     /**
-     * Method to tell if the order has SQL interactions or to see if the order has SQL interactions.
-     * @param bool|null $value
+     * Method to tell if the order has SQL interactions.
+     * @param bool $value
      * @return bool|null
      */
-    function isSQL(bool $value = null): ?bool
+    function isSQL(bool $value = false): ?bool
     {
-        if ($value === null) return $this->mysql;
+        if ($value === false) return $this->mysql;
         $this->mysql = $value;
         return null;
     }
@@ -58,10 +58,10 @@ class Order
     }
 
     /**
-     * Method to see which event the order holds.
+     * Method to see which event the order will call.
      * @return int
      */
-    function getCall(): int
+    function getCall(): ?int
     {
         return $this->event;
     }

@@ -5,15 +5,15 @@ namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
-use CupidonSauce173\PigFriends\FriendsLoader;
 use CupidonSauce173\PigFriends\Utils\ListenerConstants;
+use CupidonSauce173\PigFriends\Utils\Utils;
 use Exception;
 use mysqli;
 use Thread;
 use Volatile;
 use function microtime;
-use function sprintf;
 use function mysqli_connect;
+use function sprintf;
 
 class MultiFunctionThread extends Thread
 {
@@ -220,7 +220,7 @@ class MultiFunctionThread extends Thread
             }
         }
 
-        $this->container['friends'][] = $entity;
+        Utils::addFriendPlayer($entity);
     }
 
     /**
@@ -330,9 +330,9 @@ class MultiFunctionThread extends Thread
 
         $order = new Order();
         $order->isSQL(false);
-        if($stmt->affected_rows === 0){
+        if ($stmt->affected_rows === 0) {
             $order->setCall(ListenerConstants::REQUEST_ALREADY_EXISTS);
-        }else{
+        } else {
             $order->setCall(ListenerConstants::REQUEST_CREATED);
         }
         $order->setInputs([$author, $target]);

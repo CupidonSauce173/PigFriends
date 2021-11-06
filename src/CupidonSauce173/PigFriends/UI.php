@@ -102,7 +102,7 @@ class UI
     function friendsPage(Player $player, int $page, Friend $friend): void
     {
         $friends = $friend->getFriends();
-        if(empty($friend->getFriends())){
+        if (empty($friend->getFriends())) {
             $player->sendMessage(Utils::Translate('error.no.friends'));
             return;
         }

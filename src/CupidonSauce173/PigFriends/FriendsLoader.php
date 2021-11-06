@@ -3,11 +3,11 @@
 
 namespace CupidonSauce173\PigFriends;
 
+use CupidonSauce173\PigFriends\Tasks\OrderListenerTask;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
 use CupidonSauce173\PigFriends\Utils\Utils;
-use CupidonSauce173\PigFriends\Tasks\OrderListenerTask;
 use Exception;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
