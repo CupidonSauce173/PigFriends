@@ -143,9 +143,10 @@ class MultiFunctionThread extends Thread
      */
     function customQuery(string $query, array $data, mysqli $link): void
     {
-        /*
-         * TODO: Implement this.
-         */
+        $stmt = $link->prepare($query);
+        $stmt->bind_param($data[0], $data[1]);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**

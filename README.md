@@ -372,10 +372,10 @@ new order object and then execute it. Here's an example on how to call the CUSTO
 $order = new Order();
 $order->setCall(MultiFunctionThread::CUSTOM_QUERY);
 $order->isSQL(true);
+$data = [0, 'CupidonSauce173']; # Values
 $order->setInputs([
   'UPDATE FriendSettings SET request_state = ? WHERE player = ?',
-  'is',
-  'CupidonSauce173'
+  ['is', $data] # i = 0, s = 'CupidonSauce173'
 ]);
 $order->execute();
 ```
