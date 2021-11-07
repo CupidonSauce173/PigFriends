@@ -34,8 +34,7 @@ class UI
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) {
             if ($data === null) return;
-            $friend = Utils::getFriendPlayer($player->getName());
-            var_dump($friend);
+            $friend = Utils::getFriendEntity($player->getName());
             switch ($data) {
                 case 0:
                     $this->addPage($player, $friend);
@@ -73,7 +72,11 @@ class UI
     {
         # Needs to add the createCustomForm method in the lib.
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
-            if ($data[0] == null) return;
+            if($data === null) return;
+            if(empty($data[0])){
+                $player->sendMessage(Utils::Translate('error.incorrect.input'));
+                return;
+            }
             if (isset($friend->getRequests()[$data[0]])) {
                 $player->sendMessage(Utils::Translate('error.already.sent', ['target' => $data[0]]));
                 return;
@@ -85,8 +88,6 @@ class UI
             $order->isSQL(true);
             $order->setInputs([$player->getName(), $data[0]]);
             $order->execute();
-
-            $player->sendMessage(Utils::Translate('utils.request.sent', ['target' => $data[0]]));
         });
         $ui->setTitle(Utils::Translate('ui.main.title'));
         $ui->addInput(Utils::Translate('ui.addPage.input'));
@@ -119,6 +120,7 @@ class UI
         }
 
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend) {
+            if($data === null) return;
             # Prepare close & next page places.
             $nextPage = null;
             $listCount = count($this->pageContainer[$name]['content']);
@@ -165,6 +167,7 @@ class UI
     function selectedFriend(Player $player, Friend $friend, string $selectedFriend): void
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $selectedFriend) {
+            if($data === null) return;
             switch ($data) {
                 case 0:
                     # Set friend as favorite
@@ -203,6 +206,7 @@ class UI
     function confirmationPage(Player $player, int $event, array $options = null): void
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($event, $options) {
+            if($data === null) return;
             switch ($data) {
                 case 0:
                     $order = new Order();
@@ -247,6 +251,7 @@ class UI
     function settingsPage(Player $player, Friend $friend): void
     {
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
+            if($data === null) return;
             # Process data.
             $friend->setNotifyState($data[0]);
             $friend->setRequestState($data[1]);
@@ -261,14 +266,14 @@ class UI
             $player->sendMessage(Utils::Translate('utils.settings.updated'));
         });
         $ui->setTitle(Utils::Translate('ui.main.title'));
-        $ui->addToggle(Utils::Translate('ui.settings.toggle.notify'));
-        $ui->addToggle(Utils::Translate('ui.settings.toggle.request'));
+        $ui->addToggle(Utils::Translate('ui.settings.toggle.notify'), $friend->getNotifyState());
+        $ui->addToggle(Utils::Translate('ui.settings.toggle.request'), $friend->getRequestState());
         $ui->addDropdown(Utils::Translate('ui.settings.content.notify'),
             [
                 Utils::Translate('ui.settings.dropdown.never'),
                 Utils::Translate('ui.settings.dropdown.favorites'),
                 Utils::Translate('ui.settings.dropdown.all.friends')
-            ]);
+            ], $friend->getJoinSetting());
         $ui->sendToPlayer($player);
     }
 

@@ -326,13 +326,13 @@ Then, you can use the API like you wish.
 ```php
 
 # Gets a Friend entity from a username.
-Utils::getFriendPlayer(string $target) : ?Friend
+Utils::getFriendEntity(string $target) : ?Friend
 
 # Add a friend entity to the list of friends in the container.
-Utils::addFriendPlayer(Friend $friend) : void
+Utils::addFriendEntity(Friend $friend) : void
 
 # Remove a friend entity from the list of friends in the container.
-Utils::removeFriendPlayer(Friend $friend) : void
+Utils::removeFriendEntity(Friend $friend) : void
 
 # Will translate a langKey from the langKey.ini to a readable message for the players.
 Utils::Translate(string $message, array $langKey = null): ?string

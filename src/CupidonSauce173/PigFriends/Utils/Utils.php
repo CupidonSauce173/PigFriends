@@ -31,22 +31,34 @@ class Utils
     /**
      * Gets a Friend entity from a username
      * @param string $target
-     * @return Friend|null
+     * @return Friend
      */
-    static function getFriendPlayer(string $target): ?Friend
+    static function getFriendEntity(string $target): ?Friend
     {
         /** @var Friend $friend */
-        foreach (FriendsLoader::getInstance()->container['friends'] as $friend) {
-            if ($friend->getPlayer() === $target) return $friend;
+        foreach (FriendsLoader::getInstance()->container['friends'] as $index => $friend) {
+            if($friend->getPlayer() === $target){
+                return $friend;
+            }
         }
         return null;
+    }
+
+    /**
+     * @param Friend $friend
+     * @return false|int|string
+     */
+    static function getFriendEntityIndex(Friend $friend)
+    {
+        $friends = (array)FriendsLoader::getInstance()->container['friends'];
+        return array_search($friend, $friends);
     }
 
     /**
      * Add a friend entity to the list of friends in the container.
      * @param Friend $friend
      */
-    static function addFriendPlayer(Friend $friend): void
+    static function addFriendEntity(Friend $friend): void
     {
         FriendsLoader::getInstance()->container['friends'][] = $friend;
     }
@@ -55,10 +67,11 @@ class Utils
      * Remove a friend entity from the list of friends in the container.
      * @param Friend $friend
      */
-    static function removeFriendPlayer(Friend $friend): void
+    static function removeFriendEntity(Friend $friend): void
     {
-        if (isset(FriendsLoader::getInstance()->container['friends'][$friend])) {
-            unset(FriendsLoader::getInstance()->container['friends'][$friend]);
+        $index = self::getFriendEntityIndex($friend);
+        if($index !== false){
+            unset(FriendsLoader::getInstance()->container['friends'][$index]);
         }
     }
 }

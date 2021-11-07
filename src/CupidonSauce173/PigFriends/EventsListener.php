@@ -9,6 +9,7 @@ use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
+use function in_array;
 
 class EventsListener implements Listener
 {
@@ -34,9 +35,10 @@ class EventsListener implements Listener
     function onLeave(PlayerQuitEvent $event): void
     {
         $player = $event->getPlayer()->getName();
-        if (!isset(FriendsLoader::getInstance()->container['players'][$player])) return;
+        $friend = Utils::getFriendEntity($player);
+        if (!in_array($player, (array)FriendsLoader::getInstance()->container['players'])) return;
         unset(FriendsLoader::getInstance()->container['players'][$player]);
-        Utils::removeFriendPlayer(Utils::getFriendPlayer($player));
+        Utils::removeFriendEntity($friend);
     }
 
     /**

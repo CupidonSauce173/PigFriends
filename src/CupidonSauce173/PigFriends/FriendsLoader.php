@@ -85,7 +85,7 @@ class FriendsLoader extends PluginBase
         # MySQL field & Threads
         $this->container = new Volatile();
         $this->container['config'] = [];
-        $this->container['friends'] = [];
+        $this->container['friends'] = []; # Friends container
         $this->container['requests'] = [];
         $this->container['langKeys'] = [];
         $this->container['mysql-data'] = [];

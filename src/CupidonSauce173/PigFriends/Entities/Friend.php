@@ -4,9 +4,10 @@
 namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
+use Threaded;
 use function strtolower;
 
-class Friend
+class Friend extends Threaded
 {
     const ALL_FRIENDS = 0;
     const ONLY_FAVORITES = 1;
