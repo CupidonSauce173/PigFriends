@@ -74,6 +74,10 @@ class Commands extends Command implements PluginIdentifiableCommand
                         break;
                     }
                 }
+                if (count($friend->getFriends()) >= FriendsLoader::getInstance()->container['config']['friend-limit']) {
+                    $sender->sendMessage(Utils::Translate('error.max.friends'));
+                    return;
+                }
                 if ($valid) {
                     $order = new Order();
                     $order->isSQL(true);

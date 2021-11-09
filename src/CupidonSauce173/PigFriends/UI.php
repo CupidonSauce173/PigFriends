@@ -72,8 +72,8 @@ class UI
     {
         # Needs to add the createCustomForm method in the lib.
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
-            if($data === null) return;
-            if(empty($data[0])){
+            if ($data === null) return;
+            if (empty($data[0])) {
                 $player->sendMessage(Utils::Translate('error.incorrect.input'));
                 return;
             }
@@ -120,7 +120,8 @@ class UI
         }
 
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend) {
-            if($data === null) return;
+            if ($data === null) return;
+
             # Prepare close & next page places.
             $nextPage = null;
             $listCount = count($this->pageContainer[$name]['content']);
@@ -167,7 +168,7 @@ class UI
     function selectedFriend(Player $player, Friend $friend, string $selectedFriend): void
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $selectedFriend) {
-            if($data === null) return;
+            if ($data === null) return;
             switch ($data) {
                 case 0:
                     # Set friend as favorite
@@ -175,15 +176,15 @@ class UI
                         $this->confirmationPage($player, self::UNSET_FAVORITE, [$selectedFriend]);
                         break;
                     }
-                    $this->confirmationPage($player, self::SET_FAVORITE, [$selectedFriend]);
+                    $this->confirmationPage($player, self::SET_FAVORITE, [$selectedFriend, $friend]);
                     break;
                 case 1:
                     # Block friend
-                    $this->confirmationPage($player, self::BLOCK_PLAYER, [$selectedFriend]);
+                    $this->confirmationPage($player, self::BLOCK_PLAYER, [$selectedFriend, $friend]);
                     break;
                 case 2:
                     # Remove friend
-                    $this->confirmationPage($player, self::REMOVE_FRIEND, [$selectedFriend]);
+                    $this->confirmationPage($player, self::REMOVE_FRIEND, [$selectedFriend, $friend]);
                     break;
                 case 3:
                     return;
@@ -206,29 +207,26 @@ class UI
     function confirmationPage(Player $player, int $event, array $options = null): void
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($event, $options) {
-            if($data === null) return;
+            if ($data === null) return;
             switch ($data) {
                 case 0:
                     $order = new Order();
-                    /*
-                     * TODO: Add local-process for each of them.
-                     */
                     switch ($event) {
                         case self::SET_FAVORITE:
-                            $order->setCall(MultiFunctionThread::ADD_FAVORITE);
-                            $order->setInputs([$player->getName(), $options[0]]);
+                            $order->setCall(MultiFunctionThread::ADD_FAVORITE); #
+                            $order->setInputs([$options[1], $options[0]]);
                             break;
                         case self::UNSET_FAVORITE:
-                            $order->setCall(MultiFunctionThread::REMOVE_FAVORITE);
-                            $order->setInputs([$player->getName(), $options[0]]);
+                            $order->setCall(MultiFunctionThread::REMOVE_FAVORITE); #
+                            $order->setInputs([$options[1], $options[0]]);
                             break;
                         case self::REMOVE_FRIEND:
-                            $order->setCall(MultiFunctionThread::REMOVE_FRIEND);
-                            $order->setInputs([$player->getName(), $options[0]]);
+                            $order->setCall(MultiFunctionThread::REMOVE_FRIEND); #
+                            $order->setInputs([$options[1], $options[0]]);
                             break;
                         case self::BLOCK_PLAYER:
-                            $order->setCall(MultiFunctionThread::BLOCK_PLAYER);
-                            $order->setInputs([$player->getName(), $options[0]]);
+                            $order->setCall(MultiFunctionThread::BLOCK_PLAYER); #
+                            $order->setInputs([$options[1], $options[0]]);
                             break;
                     }
                     $order->isSQL(true);
@@ -251,16 +249,11 @@ class UI
     function settingsPage(Player $player, Friend $friend): void
     {
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
-            if($data === null) return;
-            # Process data.
-            $friend->setNotifyState($data[0]);
-            $friend->setRequestState($data[1]);
-            $friend->setJoinSetting($data[2]);
+            if ($data === null) return;
 
-            # Creating a new order request to update user settings.
             $order = new Order();
             $order->setCall(MultiFunctionThread::UPDATE_USER_SETTINGS);
-            $order->setInputs([$player->getName(), [$data[0], $data[1], $data[2]]]);
+            $order->setInputs([$friend, [$data[0], $data[1], $data[2]]]);
             $order->execute();
 
             $player->sendMessage(Utils::Translate('utils.settings.updated'));

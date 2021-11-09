@@ -4,8 +4,9 @@
 namespace CupidonSauce173\PigFriends\Entities;
 
 use DateTime;
+use Threaded;
 
-class Request
+class Request extends Threaded
 {
     private int $id;
     private string $target;

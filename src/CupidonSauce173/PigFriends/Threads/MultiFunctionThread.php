@@ -117,11 +117,11 @@ class MultiFunctionThread extends Thread
 
     /**
      * Will remove a friend of a player in the MySQL server.
-     * @param string $sender
+     * @param Friend $friend
      * @param string $target
      * @param mysqli $link
      */
-    function removeFriend(string $sender, string $target, mysqli $link): void
+    function removeFriend(Friend $friend, string $target, mysqli $link): void
     {
         $queryString =
             'DELETE FROM FriendRelations 
@@ -129,7 +129,7 @@ class MultiFunctionThread extends Thread
                 OR    (base_player = ? AND friend = ?)
             ';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $sender, $target, $target, $sender);
+        $stmt->bind_param('ssss', $sender, $target, $target, $friend->getPlayer());
         $stmt->execute();
         $stmt->close();
     }
@@ -162,7 +162,7 @@ class MultiFunctionThread extends Thread
         # Prepare & Execute query to verify if player exists in the database & create it if it doesn't.
         $queryString =
             'INSERT INTO FriendSettings (player)
-                 SELECT * FROM (SELECT ?) as tmp
+                 SELECT * FROM ( SELECT ? ) as tmp
                     WHERE NOT EXISTS (
                         SELECT player FROM FriendSettings WHERE player = ?
                     ) LIMIT 1;
@@ -192,9 +192,9 @@ class MultiFunctionThread extends Thread
             'SELECT
               FriendRelations.id, FriendRelations.friend, FriendRelations.reg_date,
               RelationState.relation_id as state_id, RelationState.is_favorite, RelationState.is_blocked
-              FROM (FriendSettings
-                     INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
-                     INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
+              FROM ( FriendSettings
+                      INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
+                      INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
                    ) WHERE FriendSettings.player = ?;
             ';
         $stmt = $link->prepare($queryString);
@@ -225,31 +225,35 @@ class MultiFunctionThread extends Thread
 
     /**
      * Method to update the user settings.
-     * @param string $player
+     * @param Friend $friend
      * @param array $data
      * @param mysqli $link
      */
-    function updateUserSettings(string $player, array $data, mysqli $link): void
+    function updateUserSettings(Friend $friend, array $data, mysqli $link): void
     {
         # Preparing values
         $n = (int)$data[0];
         $r = (int)$data[1];
         $j = $data[2];
 
+        $friend->setNotifyState($data[0]);
+        $friend->setRequestState($data[1]);
+        $friend->setJoinSetting($data[2]);
+
         # Updating user settings in MySQL.
         $stmt = $link->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?');
-        $stmt->bind_param('iiis', $n, $r, $j, $player);
+        $stmt->bind_param('iiis', $n, $r, $j, $friend->getPlayer());
         $stmt->execute();
         $stmt->close();
     }
 
     /**
-     * @param string $sender
+     * @param Friend $friend
      * @param string $target
      * @param int $option
      * @param mysqli $link
      */
-    function addRemoveFavorite(string $sender, string $target, int $option, mysqli $link): void
+    function addRemoveFavorite(Friend $friend, string $target, int $option, mysqli $link): void
     {
         /*
          * TODO: Implement this.
@@ -257,12 +261,12 @@ class MultiFunctionThread extends Thread
     }
 
     /**
-     * @param string $sender
+     * @param Friend $friend
      * @param string $target
      * @param int $option
      * @param mysqli $link
      */
-    function blockUnblockPlayer(string $sender, string $target, int $option, mysqli $link): void
+    function blockUnblockPlayer(Friend $friend, string $target, int $option, mysqli $link): void
     {
         /*
          * TODO: Implement this.
@@ -313,19 +317,26 @@ class MultiFunctionThread extends Thread
     {
         $queryString =
             sprintf("
-            INSERT INTO FriendRequests (sender,receiver)
-                 SELECT * FROM (SELECT '%s', '%s') as tmp
-                    WHERE NOT EXISTS (
-                        SELECT sender,receiver FROM FriendRequests WHERE sender = ? AND receiver = ?
-                    ) LIMIT 1;
+            INSERT INTO FriendRequests (sender, receiver)
+            SELECT * FROM 
+            ( SELECT '%a', '%t') as tmp
+            WHERE NOT EXISTS (
+              SELECT sender,receiver FROM FriendRequests
+                WHERE sender = ? AND receiver = ? )
+            AND (
+              SELECT IFNULL( (SELECT RelationState.is_blocked FROM
+              ( FriendSettings
+                 INNER JOIN FriendRelations on FriendSettings.player = FriendRelations.base_player
+                 INNER JOIN RelationState on FriendRelations.id = RelationState.relation_id
+              ) WHERE FriendSettings.player = ?), FALSE)
+            ) = FALSE LIMIT 1
             ", $author, $target);
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ss', $author, $target);
+        $stmt->bind_param('sss', $author, $target, $target);
         $stmt->execute();
 
         $order = new Order();
         $order->isSQL(false);
-        var_dump($stmt->affected_rows);
         if ($stmt->affected_rows === 0) {
             $order->setCall(ListenerConstants::REQUEST_ALREADY_EXISTS);
         } else {

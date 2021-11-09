@@ -13,6 +13,11 @@ use function in_array;
 
 class EventsListener implements Listener
 {
+    /*
+     * 1. Add a constructor to register the friendly-fire feature.
+     * 2. Finish the EntityDamageEvent for the friendly-fire feature.
+     */
+
     /**
      * @param PlayerJoinEvent $event
      */

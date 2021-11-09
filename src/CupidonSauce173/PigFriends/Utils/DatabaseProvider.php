@@ -63,7 +63,8 @@ class DatabaseProvider
            reg_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
            PRIMARY KEY (id),
            FOREIGN KEY (sender) REFERENCES FriendSettings(player),
-           FOREIGN KEY (receiver) REFERENCES FriendSettings(player)
+           FOREIGN KEY (receiver) REFERENCES FriendSettings(player),
+           INDEX FriendRequests_idx_sender_receiver (sender,receiver)
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
         ');
         $link->query('
@@ -84,6 +85,19 @@ class DatabaseProvider
            is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
            FOREIGN KEY (relation_id) REFERENCES FriendRelations(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;
+        ');
+
+        # Create the required triggers.
+
+        # FriendRelationTrigger will create a new entry in the RelationState table
+        # when a new FriendRelation entry has been created.
+        $link->query('
+        CREATE TRIGGER FriendRelationTrigger 
+          AFTER INSERT
+          ON FriendRelations FOR EACH ROW
+          BEGIN
+            INSERT INTO RelationState(relation_id) VALUES (new.id);
+          END;
         ');
         $link->close();
     }

@@ -37,7 +37,7 @@ class Utils
     {
         /** @var Friend $friend */
         foreach (FriendsLoader::getInstance()->container['friends'] as $index => $friend) {
-            if($friend->getPlayer() === $target){
+            if ($friend->getPlayer() === $target) {
                 return $friend;
             }
         }
@@ -70,7 +70,7 @@ class Utils
     static function removeFriendEntity(Friend $friend): void
     {
         $index = self::getFriendEntityIndex($friend);
-        if($index !== false){
+        if ($index !== false) {
             unset(FriendsLoader::getInstance()->container['friends'][$index]);
         }
     }
