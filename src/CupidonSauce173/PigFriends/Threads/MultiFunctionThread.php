@@ -158,7 +158,6 @@ class MultiFunctionThread extends Thread
         # Creating the friend entity.
         $entity = new Friend();
         $entity->setPlayer($player);
-
         # Prepare & Execute query to verify if player exists in the database & create it if it doesn't.
         $queryString =
             'INSERT INTO FriendSettings (player)
@@ -190,8 +189,7 @@ class MultiFunctionThread extends Thread
         # Prepare & Execute query to get all friend relations targeted to the player.
         $queryString =
             'SELECT
-              FriendRelations.id, FriendRelations.friend, FriendRelations.reg_date,
-              RelationState.relation_id as state_id, RelationState.is_favorite, RelationState.is_blocked
+              FriendRelations.friend, RelationState.is_favorite, RelationState.is_blocked
               FROM ( FriendSettings
                       INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
                       INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
@@ -211,12 +209,16 @@ class MultiFunctionThread extends Thread
 
         # Creating the friends, favorites and blocked players lists.
         foreach ($relations as $relation) {
-            if ($relation['is_blocked']) {
+            if ($relation['is_blocked'] !== true) {
                 $entity->blockPlayer($relation['friend']);
-                return;
+            }else{
+                $entity->addFriend($relation['friend']);
+                if ($relation['is_favorite'] !== false) {
+                    $entity->addFavorite($relation['friend']);
+                }
             }
             $entity->addFriend($relation['friend']);
-            if ($relation['is_favorite']) {
+            if ($relation['is_favorite'] !== false) {
                 $entity->addFavorite($relation['friend']);
             }
         }
