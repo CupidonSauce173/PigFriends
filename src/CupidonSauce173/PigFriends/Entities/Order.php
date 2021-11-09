@@ -14,13 +14,13 @@ class Order
 
     /**
      * Method to execute the order (must be called at the end).
-     * @param bool $isListener
+     * @param bool $isOrderListener
      * @return string|null
      */
-    function execute(bool $isListener = false): ?string
+    function execute(bool $isOrderListener = false): ?string
     {
         $this->id = uniqid();
-        if ($isListener) {
+        if ($isOrderListener) {
             return $this->id;
         }
         FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;

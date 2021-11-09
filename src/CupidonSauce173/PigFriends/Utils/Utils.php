@@ -45,16 +45,6 @@ class Utils
     }
 
     /**
-     * @param Friend $friend
-     * @return false|int|string
-     */
-    static function getFriendEntityIndex(Friend $friend)
-    {
-        $friends = (array)FriendsLoader::getInstance()->container['friends'];
-        return array_search($friend, $friends);
-    }
-
-    /**
      * Add a friend entity to the list of friends in the container.
      * @param Friend $friend
      */
@@ -73,5 +63,15 @@ class Utils
         if ($index !== false) {
             unset(FriendsLoader::getInstance()->container['friends'][$index]);
         }
+    }
+
+    /**
+     * @param Friend $friend
+     * @return false|int|string
+     */
+    static function getFriendEntityIndex(Friend $friend)
+    {
+        $friends = (array)FriendsLoader::getInstance()->container['friends'];
+        return array_search($friend, $friends);
     }
 }

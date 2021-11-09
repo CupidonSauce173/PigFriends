@@ -17,7 +17,7 @@ class UI
     const REMOVE_FRIEND = 2;
     const BLOCK_PLAYER = 3;
 
-    private array $pageContainer = []; # Contain the current page of the players using the UI.
+    private array $pageContainer = [];
 
     private FormAPI $uiApi;
 
@@ -40,15 +40,12 @@ class UI
                     $this->addPage($player, $friend);
                     break;
                 case 1:
-                    $this->friendsPage($player, 1, $friend);
+                    $this->friendsPage($player, 0, $friend);
                     break;
                 case 2:
                     $this->settingsPage($player, $friend);
                     break;
                 case 3:
-                    $this->helpPage($player, $friend);
-                    break;
-                case 4:
                     break;
             }
         });
@@ -58,7 +55,6 @@ class UI
         $ui->addButton(Utils::Translate('ui.button.add.friend'));
         $ui->addButton(Utils::Translate('ui.button.friends'));
         $ui->addButton(Utils::Translate('ui.button.settings'));
-        $ui->addButton(Utils::Translate('ui.button.help'));
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
@@ -103,7 +99,7 @@ class UI
     function friendsPage(Player $player, int $page, Friend $friend): void
     {
         $friends = $friend->getFriends();
-        if (empty($friend->getFriends())) {
+        if (!isset($friend->getFriends()[0])) {
             $player->sendMessage(Utils::Translate('error.no.friends'));
             return;
         }
@@ -113,48 +109,40 @@ class UI
         }
 
         $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
-        $start = $limit * $page;
+        $start = $page * $limit; # If page = 0, start = 0, if page = 0, start = 10 (if friend-per-page: 10)
+        $stop = $start + $limit; # If page = 0, stop = 10 (if friend-per-page: 10), if page = 1, stop = 20 (start = 10)
 
-        for ($i = 0; $i <= $start; $i++) {
-            unset($friends[$i]);
-        }
-
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend) {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend, $start, $stop, $page) {
             if ($data === null) return;
 
-            # Prepare close & next page places.
-            $nextPage = null;
-            $listCount = count($this->pageContainer[$name]['content']);
-            if ($this->pageContainer[$name]['remains']) {
-                $nextPage = $listCount + 1;
+            $realIndex = $data + $start;
+
+            if (isset($friend->getFriends()[$realIndex])) {
+                $this->selectedFriend($player, $friend, $friend->getFriends()[$realIndex]);
+            } else {
+                if ($this->pageContainer[$name]['remains']) {
+                    $this->friendsPage($player, $page + 1, $friend);
+                }
             }
-            $close = $listCount + 1;
-            if ($nextPage !== null) {
-                $close = $nextPage + 1;
-            }
-            if ($data === $nextPage) {
-                $this->friendsPage($player, $this->pageContainer[$name]['page'] + 1, $friend);
-                return;
-            }
-            if ($data === $close) return;
-            $this->selectedFriend($player, $friend, $data);
         });
         $ui->setTitle(Utils::Translate('ui.main.title'));
+        $ui->setContent(Utils::Translate('ui.friend.list.content'));
 
         $remains = true;
-        for ($i = 0; $i < $limit; $i++) {
-            if (isset($friends[$i])) {
-                $ui->addButton($friends[$i]);
+        for (; $start <= $stop; $start++) {
+            if (isset($friends[$start])) {
+                $ui->addButton($friends[$start]);
             } else {
                 $remains = false;
                 break;
             }
         }
+        $this->pageContainer[$name]['remains'] = false;
         if ($remains) {
             $ui->addButton(Utils::Translate('ui.button.next'));
+            $this->pageContainer[$name]['remains'] = true;
         }
-        $this->pageContainer[$name]['content'] = $friends;
-        $this->pageContainer[$name]['remains'] = $remains;
+
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }
@@ -167,23 +155,21 @@ class UI
      */
     function selectedFriend(Player $player, Friend $friend, string $selectedFriend): void
     {
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $selectedFriend) {
+        $isFavorite = $friend->isFavorite($selectedFriend);
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $selectedFriend, $isFavorite) {
             if ($data === null) return;
             switch ($data) {
                 case 0:
-                    # Set friend as favorite
-                    if ($friend->isFavorite($selectedFriend)) {
-                        $this->confirmationPage($player, self::UNSET_FAVORITE, [$selectedFriend]);
+                    if ($isFavorite) {
+                        $this->confirmationPage($player, self::UNSET_FAVORITE, [$selectedFriend, $friend]);
                         break;
                     }
                     $this->confirmationPage($player, self::SET_FAVORITE, [$selectedFriend, $friend]);
                     break;
                 case 1:
-                    # Block friend
                     $this->confirmationPage($player, self::BLOCK_PLAYER, [$selectedFriend, $friend]);
                     break;
                 case 2:
-                    # Remove friend
                     $this->confirmationPage($player, self::REMOVE_FRIEND, [$selectedFriend, $friend]);
                     break;
                 case 3:
@@ -191,7 +177,12 @@ class UI
             }
         });
         $ui->setTitle($selectedFriend);
-        $ui->addButton(Utils::Translate('ui.button.set.favorite'));
+        $ui->setContent(Utils::Translate('ui.friend.content'));
+        if ($isFavorite) {
+            $ui->addButton(Utils::Translate('ui.button.unset.favorite'));
+        } else {
+            $ui->addButton(Utils::Translate('ui.button.set.favorite'));
+        }
         $ui->addButton(Utils::Translate('ui.button.block'));
         $ui->addButton(Utils::Translate('ui.button.remove'));
         $ui->addButton(Utils::Translate('ui.button.close'));
@@ -208,34 +199,37 @@ class UI
     {
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($event, $options) {
             if ($data === null) return;
-            switch ($data) {
-                case 0:
-                    $order = new Order();
-                    switch ($event) {
-                        case self::SET_FAVORITE:
-                            $order->setCall(MultiFunctionThread::ADD_FAVORITE); #
-                            $order->setInputs([$options[1], $options[0]]);
-                            break;
-                        case self::UNSET_FAVORITE:
-                            $order->setCall(MultiFunctionThread::REMOVE_FAVORITE); #
-                            $order->setInputs([$options[1], $options[0]]);
-                            break;
-                        case self::REMOVE_FRIEND:
-                            $order->setCall(MultiFunctionThread::REMOVE_FRIEND); #
-                            $order->setInputs([$options[1], $options[0]]);
-                            break;
-                        case self::BLOCK_PLAYER:
-                            $order->setCall(MultiFunctionThread::BLOCK_PLAYER); #
-                            $order->setInputs([$options[1], $options[0]]);
-                            break;
-                    }
-                    $order->isSQL(true);
-                    $order->execute();
-                    break;
-                case 1:
-                    break;
+
+            if ($data === 0) {
+                $order = new Order();
+                switch ($event) {
+                    case self::SET_FAVORITE:
+                        $order->setCall(MultiFunctionThread::ADD_FAVORITE); #
+                        $order->setInputs([$options[1], $options[0]]);
+                        $player->sendMessage(Utils::Translate('utils.favorite.add.success', ['target' => $options[0]]));
+                        break;
+                    case self::UNSET_FAVORITE:
+                        $order->setCall(MultiFunctionThread::REMOVE_FAVORITE); #
+                        $order->setInputs([$options[1], $options[0]]);
+                        $player->sendMessage(Utils::Translate('utils.favorite.remove.success', ['target' => $options[0]]));
+                        break;
+                    case self::REMOVE_FRIEND:
+                        $order->setCall(MultiFunctionThread::REMOVE_FRIEND); #
+                        $order->setInputs([$options[1], $options[0]]);
+                        $player->sendMessage(Utils::Translate('utils.remove.success', ['target' => $options[0]]));
+                        break;
+                    case self::BLOCK_PLAYER:
+                        $order->setCall(MultiFunctionThread::BLOCK_PLAYER); #
+                        $order->setInputs([$options[1], $options[0]]);
+                        $player->sendMessage(Utils::Translate('utils.block.success', ['target' => $options[0]]));
+                        break;
+                }
+                $order->isSQL(true);
+                $order->execute();
             }
         });
+        $ui->setTitle(Utils::Translate('ui.confirmation.title'));
+        $ui->setTitle(Utils::Translate('ui.confirmation.content'));
         $ui->addButton(Utils::Translate('ui.button.confirmation'));
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
@@ -268,21 +262,5 @@ class UI
                 Utils::Translate('ui.settings.dropdown.all.friends')
             ], $friend->getJoinSetting());
         $ui->sendToPlayer($player);
-    }
-
-    /**
-     * Help page for the plugin.
-     * @param Player $player The player that receives the UI.
-     * @param Friend $friend The Friend object related to the player.
-     */
-    function helpPage(Player $player, Friend $friend): void
-    {
-        /*
-        Format for the helpPage UI.
-        1. Description of the plugin.
-        2. List of commands + their args and description.
-        3. Player preferences.
-        4. Requests.
-         */
     }
 }
