@@ -39,14 +39,6 @@ class SimpleForm extends Form
     /**
      * @return string
      */
-    function getTitle(): string
-    {
-        return $this->data['title'];
-    }
-
-    /**
-     * @return string
-     */
     function getContent(): string
     {
         return $this->data['content'];

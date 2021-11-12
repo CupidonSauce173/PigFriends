@@ -30,14 +30,6 @@ class ModalForm extends Form
     /**
      * @return string
      */
-    function getTitle(): string
-    {
-        return $this->data['title'];
-    }
-
-    /**
-     * @return string
-     */
     function getContent(): string
     {
         return $this->data['content'];
@@ -49,37 +41,5 @@ class ModalForm extends Form
     function setContent(string $content): void
     {
         $this->data['content'] = $content;
-    }
-
-    /**
-     * @param string $text
-     */
-    function setButton1(string $text): void
-    {
-        $this->data['button1'] = $text;
-    }
-
-    /**
-     * @return string
-     */
-    function getButton1(): string
-    {
-        return $this->data['button1'];
-    }
-
-    /**
-     * @param string $text
-     */
-    function setButton2(string $text): void
-    {
-        $this->data['button2'] = $text;
-    }
-
-    /**
-     * @return string
-     */
-    function getButton2(): string
-    {
-        return $this->data['button2'];
     }
 }

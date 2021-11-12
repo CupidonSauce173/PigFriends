@@ -122,11 +122,22 @@ class MultiFunctionThread extends Thread
      */
     function removeFriend(Friend $friend, string $target, mysqli $link): void
     {
-        # Have to redo this
-        $queryString =
-            'DELETE FROM FriendRelations 
-                WHERE (base_player = ? AND friend = ?)
-                OR    (base_player = ? AND friend = ?);';
+        # Delete entries from RelationState.
+        $queryString = '
+            DELETE FROM RelationState
+            WHERE relation_id = (SELECT FriendRelations.id FROM (
+                FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
+            ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?
+              OR FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('ssss', $sender, $target, $target, $friend->getPlayer());
+        $stmt->execute();
+        $stmt->close();
+        # Delete entries from FriendRelations.
+        $queryString = '
+            DELETE FROM FriendRelations 
+               WHERE (base_player = ? AND friend = ?)
+               OR    (base_player = ? AND friend = ?);';
         $stmt = $link->prepare($queryString);
         $stmt->bind_param('ssss', $sender, $target, $target, $friend->getPlayer());
         $stmt->execute();
@@ -328,7 +339,7 @@ class MultiFunctionThread extends Thread
                 FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_Player
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.Friend = ?);';
 
-            $this->unblockPlayer($friend, $target, $link, true); # Hacky af
+            $this->unblockPlayer($friend, $target, $link, true);
         } else {
             # Process if they aren't friends.
             $queryString = 'INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)'; # First create the new relation.
@@ -422,8 +433,7 @@ class MultiFunctionThread extends Thread
             $order->setCall(ListenerConstants::REQUEST_CREATED);
         }
         $order->setInputs([$author, $target]);
-        $this->container['orderListener'][$order->execute(true)] = $order;
-
+        $order->execute(true);
         $stmt->close();
     }
 }

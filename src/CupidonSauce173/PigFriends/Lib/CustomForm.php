@@ -37,24 +37,6 @@ class CustomForm extends Form
     }
 
     /**
-     * @return string
-     */
-    function getTitle(): string
-    {
-        return $this->data['title'];
-    }
-
-    /**
-     * @param string $text
-     * @param string|null $label
-     */
-    function addLabel(string $text, ?string $label = null): void
-    {
-        $this->addContent(['type' => 'label', 'text' => $text]);
-        $this->labelMap[] = $label ?? count($this->labelMap);
-    }
-
-    /**
      * @param array $content
      */
     private function addContent(array $content): void
@@ -72,43 +54,6 @@ class CustomForm extends Form
         $content = ['type' => 'toggle', 'text' => $text];
         if ($default !== null) {
             $content['default'] = $default;
-        }
-        $this->addContent($content);
-        $this->labelMap[] = $label ?? count($this->labelMap);
-    }
-
-    /**
-     * @param string $text
-     * @param int $min
-     * @param int $max
-     * @param int $step
-     * @param int $default
-     * @param string|null $label
-     */
-    function addSlider(string $text, int $min, int $max, int $step = -1, int $default = -1, ?string $label = null): void
-    {
-        $content = ['type' => 'slider', 'text' => $text, 'min' => $min, 'max' => $max];
-        if ($step !== -1) {
-            $content['step'] = $step;
-        }
-        if ($default !== -1) {
-            $content['default'] = $default;
-        }
-        $this->addContent($content);
-        $this->labelMap[] = $label ?? count($this->labelMap);
-    }
-
-    /**
-     * @param string $text
-     * @param array $steps
-     * @param int $defaultIndex
-     * @param string|null $label
-     */
-    function addStepSlider(string $text, array $steps, int $defaultIndex = -1, ?string $label = null): void
-    {
-        $content = ['type' => 'step_slider', 'text' => $text, 'steps' => $steps];
-        if ($defaultIndex !== -1) {
-            $content['default'] = $defaultIndex;
         }
         $this->addContent($content);
         $this->labelMap[] = $label ?? count($this->labelMap);

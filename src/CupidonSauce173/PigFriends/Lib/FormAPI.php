@@ -23,13 +23,4 @@ class FormAPI
     {
         return new CustomForm($function);
     }
-
-    /**
-     * @param callable|null $function
-     * @return ModalForm
-     */
-    public function createModalForm(?callable $function = null): ModalForm
-    {
-        return new ModalForm($function);
-    }
 }

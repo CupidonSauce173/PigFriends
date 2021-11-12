@@ -57,14 +57,6 @@ abstract class Form implements IForm
         return $this->callable;
     }
 
-    /**
-     * @param callable|null $callable
-     */
-    function setCallable(?callable $callable)
-    {
-        $this->callable = $callable;
-    }
-
     function jsonSerialize()
     {
         return $this->data;

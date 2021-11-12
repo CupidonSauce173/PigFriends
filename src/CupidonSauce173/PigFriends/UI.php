@@ -66,7 +66,6 @@ class UI
      */
     function addPage(Player $player, Friend $friend): void
     {
-        # Needs to add the createCustomForm method in the lib.
         $ui = $this->uiApi->createCustomForm(function (Player $player, $data) use ($friend) {
             if ($data === null) return;
             if (empty($data[0])) {
@@ -172,8 +171,6 @@ class UI
                 case 2:
                     $this->confirmationPage($player, self::REMOVE_FRIEND, [$selectedFriend, $friend]);
                     break;
-                case 3:
-                    return;
             }
         });
         $ui->setTitle($selectedFriend);

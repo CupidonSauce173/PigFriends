@@ -21,7 +21,7 @@ class Order
     {
         $this->id = uniqid();
         if ($isOrderListener) {
-            return $this->id;
+            FriendsLoader::getInstance()->container['orderListener'][$this->id] = $this;
         }
         FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;
         return null;
