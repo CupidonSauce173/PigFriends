@@ -16,19 +16,20 @@ use function sprintf;
 
 class MultiFunctionThread extends Thread
 {
-    const REFUSE_REQUEST = 0;
-    const ACCEPT_REQUEST = 1;
-    const SEND_NEW_REQUEST = 2;
-    const REMOVE_FRIEND = 3;
+    const SEND_NEW_REQUEST = 0;
+    const UPDATE_USER_SETTINGS = 1;
+    const BLOCK_PLAYER = 2;
+    const UNBLOCK_PLAYER = 3;
     const ADD_FAVORITE = 4;
     const REMOVE_FAVORITE = 5;
-    const CUSTOM_QUERY = 6;
+    const REMOVE_FRIEND = 6;
     const CREATE_FRIEND_ENTITY = 7;
-    const UPDATE_USER_SETTINGS = 8;
-    const BLOCK_PLAYER = 9;
-    const UNBLOCK_PLAYER = 10;
+    const ACCEPT_REQUEST = 8;
+    const REFUSE_REQUEST = 9;
+    const CUSTOM_QUERY = 10;
 
     private Volatile $container;
+    private Volatile $protectionContainer;
 
     /**
      * @throws Exception
@@ -36,6 +37,25 @@ class MultiFunctionThread extends Thread
     function __construct(Volatile $container)
     {
         $this->container = $container;
+        $this->protectionContainer = new Volatile();
+        $this->protectionContainer['orderTypes'] = [
+            self::SEND_NEW_REQUEST => [],
+            self::UPDATE_USER_SETTINGS => [],
+            self::BLOCK_PLAYER => [],
+            self::UNBLOCK_PLAYER => [],
+            self::ADD_FAVORITE => [],
+            self::REMOVE_FAVORITE => [],
+            self::REMOVE_FRIEND => []
+        ];
+        $this->protectionContainer['indexToString'] = [
+            0 => 'SEND_NEW_REQUEST',
+            1 => 'UPDATE_USER_SETTINGS',
+            2 => 'BLOCK_PLAYER',
+            3 => 'UNBLOCK_PLAYER',
+            4 => 'ADD_FAVORITE',
+            5 => 'REMOVE_FAVORITE',
+            6 => 'REMOVE_FRIEND'
+        ];
     }
 
     function run()
@@ -56,8 +76,47 @@ class MultiFunctionThread extends Thread
 
         while ($this->container['runThread']) {
             if (microtime(true) >= $nextTime) {
+                $this->ProcessOrderProtection();
                 $this->ProcessThread($link);
                 $nextTime = microtime(true) + 1;
+            }
+        }
+    }
+
+    /**
+     * Method that will attach a new order to the player and return true if the player maxed out the amount of orders they can do.
+     * @param string $user
+     * @param int $order
+     * @return bool
+     */
+    private function attachOrderToUser(string $user, int $order): bool
+    {
+        if (!isset($this->protectionContainer['orderTypes']['container'][$order][$user])) {
+            $this->protectionContainer['orderTypes'][$order][$user] = [
+                'amount' => 1,
+                'nextReset' => 60
+            ];
+            return false;
+        }
+        $amount = $this->protectionContainer['orderTypes'][$order][$user]['amount'] + 1;
+        if ($amount >= $this->container['config']['protection'][$this->protectionContainer['indexToString'][$order]]) return true;
+        $this->protectionContainer['orderTypes'][$order][$user]['amount'] = $amount;
+        return false;
+    }
+
+    /**
+     * Method that will process the order protection system. Doing -1
+     */
+    private function ProcessOrderProtection(): void
+    {
+        foreach ($this->protectionContainer['orderTypes'] as $name => $container) {
+            foreach ($container as $user => $data) {
+                if ($data['nextReset'] === 0) {
+                    $this->protectionContainer['orderTypes'][$name][$user]['amount'] = 0;
+                    $this->protectionContainer['orderTypes'][$name][$user]['nextReset'] = 60;
+                }else{
+                    $this->protectionContainer['orderTypes'][$name][$user]['nextReset']--;
+                }
             }
         }
     }
@@ -66,12 +125,25 @@ class MultiFunctionThread extends Thread
      * Method to process the thread.
      * @param mysqli $link
      */
-    function ProcessThread(mysqli $link): void
+    private function ProcessThread(mysqli $link): void
     {
         /** @var Order $order */
         foreach ($this->container['multiFunctionQueue'] as $order) {
-            $inputs = (array)$order->getInputs();
             unset($this->container['multiFunctionQueue'][$order->getId()]);
+            $inputs = (array)$order->getInputs();
+            if(isset($this->protectionContainer['orderTypes'][$order->getCall()])){
+                if ($this->attachOrderToUser($inputs[0], $order->getCall())) {
+                    $listenerOrder = new Order();
+                    $listenerOrder->setCall(ListenerConstants::ORDER_PROTECTION);
+                    $listenerOrder->setInputs([
+                        $inputs[0],
+                        $this->protectionContainer['orderTypes'][$order->getCall()][$inputs[0]]['nextReset']
+                    ]);
+                    $state = $listenerOrder->execute(true);
+                    $this->container['orderListener'][$state] = $listenerOrder;
+                    return;
+                }   
+            }
             switch ($order->getCall()) {
                 case self::REMOVE_FRIEND:
                     $this->removeFriend($inputs[0], $inputs[1], $link);
@@ -120,7 +192,7 @@ class MultiFunctionThread extends Thread
      * @param string $target
      * @param mysqli $link
      */
-    function removeFriend(Friend $friend, string $target, mysqli $link): void
+    private function removeFriend(Friend $friend, string $target, mysqli $link): void
     {
         # Delete entries from RelationState.
         $queryString = '
@@ -150,7 +222,7 @@ class MultiFunctionThread extends Thread
      * @param array $data
      * @param mysqli $link
      */
-    function customQuery(string $query, array $data, mysqli $link): void
+    private function customQuery(string $query, array $data, mysqli $link): void
     {
         $stmt = $link->prepare($query);
         $stmt->bind_param($data[0], ...$data[1]);
@@ -163,7 +235,7 @@ class MultiFunctionThread extends Thread
      * @param string $player
      * @param mysqli $link
      */
-    function createFriendEntity(string $player, mysqli $link): void
+    private function createFriendEntity(string $player, mysqli $link): void
     {
         # Creating the friend entity.
         $entity = new Friend();
@@ -235,12 +307,13 @@ class MultiFunctionThread extends Thread
      * @param array $data
      * @param mysqli $link
      */
-    function updateUserSettings(Friend $friend, array $data, mysqli $link): void
+    private function updateUserSettings(Friend $friend, array $data, mysqli $link): void
     {
         # Preparing values
         $n = (int)$data[0];
         $r = (int)$data[1];
         $j = $data[2];
+        $player = $friend->getPlayer();
 
         $friend->setNotifyState($data[0]);
         $friend->setRequestState($data[1]);
@@ -248,7 +321,7 @@ class MultiFunctionThread extends Thread
 
         # Updating user settings in MySQL.
         $stmt = $link->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?;');
-        $stmt->bind_param('iiis', $n, $r, $j, $friend->getPlayer());
+        $stmt->bind_param('iiis', $n, $r, $j, $player);
         $stmt->execute();
         $stmt->close();
     }
@@ -260,7 +333,7 @@ class MultiFunctionThread extends Thread
      * @param int $option
      * @param mysqli $link
      */
-    function addRemoveFavorite(Friend $friend, string $target, int $option, mysqli $link): void
+    private function addRemoveFavorite(Friend $friend, string $target, int $option, mysqli $link): void
     {
 
         if ($option === self::ADD_FAVORITE) {
@@ -291,7 +364,7 @@ class MultiFunctionThread extends Thread
      * @param mysqli $link
      * @param bool $inverseFriendTarget
      */
-    function unblockPlayer(Friend $friend, string $target, mysqli $link, bool $inverseFriendTarget = false): void
+    private function unblockPlayer(Friend $friend, string $target, mysqli $link, bool $inverseFriendTarget = false): void
     {
         if ($inverseFriendTarget) {
             $player = $target;
@@ -324,7 +397,7 @@ class MultiFunctionThread extends Thread
      * @param string $target
      * @param mysqli $link
      */
-    function blockPlayer(Friend $friend, string $target, mysqli $link): void
+    private function blockPlayer(Friend $friend, string $target, mysqli $link): void
     {
         $player = $friend->getPlayer();
         if ((array)in_array($target, $friend->getFriends())) {
@@ -367,7 +440,7 @@ class MultiFunctionThread extends Thread
      * @param int $requestId
      * @param mysqli $link
      */
-    function refuseRequest(int $requestId, mysqli $link): void
+    private function refuseRequest(int $requestId, mysqli $link): void
     {
         $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?;');
         $stmt->bind_param('i', $requestId);
@@ -381,7 +454,7 @@ class MultiFunctionThread extends Thread
      * @param array $requestData
      * @param mysqli $link
      */
-    function acceptRequest(string $player, array $requestData, mysqli $link): void
+    private function acceptRequest(string $player, array $requestData, mysqli $link): void
     {
         # Deleting the friend request.
         $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?;');
@@ -402,14 +475,14 @@ class MultiFunctionThread extends Thread
      * @param string $target
      * @param mysqli $link
      */
-    function sendNewRequest(string $author, string $target, mysqli $link): void
+    private function sendNewRequest(string $author, string $target, mysqli $link): void
     {
         # %a = author, %t = target
         $queryString =
             sprintf("
             INSERT INTO FriendRequests (sender, receiver)
             SELECT * FROM 
-            ( SELECT '%a', '%t') as tmp
+            ( SELECT '%s', '%s') as tmp
             WHERE NOT EXISTS (
               SELECT sender,receiver FROM FriendRequests
                 WHERE sender = ? AND receiver = ? )
@@ -429,11 +502,26 @@ class MultiFunctionThread extends Thread
         $order->isSQL(false);
         if ($stmt->affected_rows === 0) {
             $order->setCall(ListenerConstants::REQUEST_ALREADY_EXISTS);
-        } else {
+            $order->setInputs([$author, $target]);
+        } elseif ($stmt->affected_rows === 1) {
             $order->setCall(ListenerConstants::REQUEST_CREATED);
+            $order->setInputs([$author, $target]);
+        } else {
+            if (isset($stmt->error_list[0])) {
+                if ($stmt->error_list[0]['errno'] === 1452) {
+                    $order->setCall(ListenerConstants::USER_NOT_CREATED);
+                    $order->setInputs([$author, $target]);
+                } else {
+                    $order->setCall(ListenerConstants::UNKNOWN_ERROR);
+                    $order->setInputs([$author, $target, self::SEND_NEW_REQUEST]);
+                }
+            } else {
+                $order->setCall(ListenerConstants::UNKNOWN_ERROR);
+                $order->setInputs([$author, $target, self::SEND_NEW_REQUEST]);
+            }
         }
-        $order->setInputs([$author, $target]);
-        $order->execute(true);
+        $state = $order->execute(true);
+        $this->container['orderListener'][$state] = $order;
         $stmt->close();
     }
 }

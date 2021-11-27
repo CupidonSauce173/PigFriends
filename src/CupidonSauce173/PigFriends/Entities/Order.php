@@ -11,7 +11,6 @@ class Order
     private array $inputs = [];
     private ?int $event = null;
 
-
     /**
      * Method to execute the order (must be called at the end).
      * @param bool $isOrderListener
@@ -21,7 +20,7 @@ class Order
     {
         $this->id = uniqid();
         if ($isOrderListener) {
-            FriendsLoader::getInstance()->container['orderListener'][$this->id] = $this;
+            return $this->id;
         }
         FriendsLoader::getInstance()->container['multiFunctionQueue'][$this->id] = $this;
         return null;

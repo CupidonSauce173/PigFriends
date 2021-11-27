@@ -21,6 +21,11 @@ class Friend extends Threaded
     private bool $requestState;
     private int $joinMessage;
 
+    function handleOrderProtection(int $order): bool
+    {
+        return false;
+    }
+
     /**
      * Method to know if a friend (by username) is set as favorite.
      * @param string $friend

@@ -13,6 +13,20 @@ command-aliases:
   - fr
   - friend
 
+# Protection field where you can set the maximum amount of orders a player can send per minute.
+# A player could start spamming a certain command like /fr add <user> which creates a new order
+# every time, the process of sending a new request is quite big. So the player could crash the server
+# or DDOS your MySQL server.
+# >>>>>>>NEVER CHANGE THE ORDER OF THE ARRAY<<<<<<<
+protection:
+  SEND_NEW_REQUEST: 10 # UI & command.
+  UPDATE_USER_SETTINGS: 10 # UI Only.
+  BLOCK_PLAYER: 10 # UI & command.
+  UNBLOCK_PLAYER: 10 # UI & command.
+  ADD_FAVORITE: 10 # UI & command.
+  REMOVE_FAVORITE: 10 # UI & command.
+  REMOVE_FRIEND: 10 # UI & command.
+
 # Note that whatever permission you put "PigFriends." will always be at the beginning.
 # In this example, the permission will be PigFriends.permission.friends.
 permission: permission.friends

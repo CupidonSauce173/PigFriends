@@ -34,16 +34,64 @@ class OrderListenerTask extends Task
                 case ListenerConstants::REQUEST_CREATED:
                     $this->requestCreated($inputs[0], $inputs[1]);
                     break;
+                case ListenerConstants::USER_NOT_CREATED:
+                    $this->userNotRegistered($inputs[0], $inputs[1]);
+                    break;
+                case ListenerConstants::UNKNOWN_ERROR:
+                    $this->unknownError($inputs[0], $inputs[1], $inputs[2]);
+                    break;
+                case ListenerConstants::ORDER_PROTECTION:
+                    $this->orderProtectionMessage($inputs[0], $inputs[1]);
             }
         }
     }
 
     /**
-     * Will send a error message to the player informing them that the request already exists.
+     * Notify the player that they reached the max amount of times they can perform an action and must wait x amount of time before doing it again.
+     * @param string $user
+     * @param int $nextReset
+     */
+    private function orderProtectionMessage(string $user, int $nextReset): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
+        if($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.order.protection', ['nextReset' => $nextReset]));
+        }
+    }
+
+    /**
+     * Notify the player that an unknown error occurred. Will show some information.
+     * @param string $user
+     * @param string $target
+     * @param int $methodCalled
+     */
+    private function unknownError(string $user, string $target, int $methodCalled): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
+        if ($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.unknown', ['target' => $target, 'event' => (string)$methodCalled]));
+        }
+    }
+
+    /**
+     * Notify the player that the target isn't registered in the database.
+     * @param string $user
+     * @param string $target
+     */
+    private function userNotRegistered(string $user, string $target): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
+        if ($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.player.not.registered', ['target' => $target]));
+        }
+    }
+
+    /**
+     * Will send an error message to the player informing them that the request already exists.
      * @param string $author
      * @param string $receiver
      */
-    function requestAlreadyExists(string $author, string $receiver): void
+    private function requestAlreadyExists(string $author, string $receiver): void
     {
         $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
         if ($player instanceof Player) {
@@ -56,7 +104,7 @@ class OrderListenerTask extends Task
      * @param string $author
      * @param string $receiver
      */
-    function requestCreated(string $author, string $receiver): void
+    private function requestCreated(string $author, string $receiver): void
     {
         $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
         if ($player instanceof Player) {

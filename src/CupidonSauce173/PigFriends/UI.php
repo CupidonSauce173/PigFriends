@@ -76,6 +76,10 @@ class UI
                 $player->sendMessage(Utils::Translate('error.already.sent', ['target' => $data[0]]));
                 return;
             }
+            if(in_array(strtolower($data[0]), array_map('strtolower', (array)$friend->getFriends()))) {
+                $player->sendMessage(Utils::Translate('error.already.friend', ['friend' => $data[0]]));
+                return;
+            }
 
             # Create a friend request.
             $order = new Order();
