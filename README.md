@@ -390,7 +390,7 @@ Will return null or a string.
 ### MySQL Database Structure
 
 <p align="center">
-  <img width="150" height="150" src="https://github.com/CupidonSauce173/PigFriends/blob/main/PigFriendsDataStructure.png" />
+  <img src="https://github.com/CupidonSauce173/PigFriends/blob/main/PigFriendsDataStructure.png" />
 </p>
 
 ### Future features
