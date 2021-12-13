@@ -16,7 +16,7 @@ command-aliases:
 # Protection field where you can set the maximum amount of orders a player can send per minute.
 # A player could start spamming a certain command like /fr add <user> which creates a new order
 # every time, the process of sending a new request is quite big. So the player could crash the server
-# or DDOS your MySQL server.
+# or DDOS / DoS your MySQL server.
 # >>>>>>>NEVER CHANGE THE ORDER OF THE ARRAY<<<<<<<
 protection:
   SEND_NEW_REQUEST: 10 # UI & command.

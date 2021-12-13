@@ -91,7 +91,7 @@ class MultiFunctionThread extends Thread
      */
     private function attachOrderToUser(string $user, int $order): bool
     {
-        if (!isset($this->protectionContainer['orderTypes']['container'][$order][$user])) {
+        if (!isset($this->protectionContainer['orderTypes'][$order][$user])) {
             $this->protectionContainer['orderTypes'][$order][$user] = [
                 'amount' => 1,
                 'nextReset' => 60
@@ -109,13 +109,13 @@ class MultiFunctionThread extends Thread
      */
     private function ProcessOrderProtection(): void
     {
-        foreach ($this->protectionContainer['orderTypes'] as $name => $container) {
-            foreach ($container as $user => $data) {
+        foreach ($this->protectionContainer['orderTypes'] as $order => $clients) {
+            foreach ($clients as $user => $data) {
                 if ($data['nextReset'] === 0) {
-                    $this->protectionContainer['orderTypes'][$name][$user]['amount'] = 0;
-                    $this->protectionContainer['orderTypes'][$name][$user]['nextReset'] = 60;
-                }else{
-                    $this->protectionContainer['orderTypes'][$name][$user]['nextReset']--;
+                    unset($this->protectionContainer['orderTypes'][$order][$user]);
+                } else {
+                    $current = $this->protectionContainer['orderTypes'][$order][$user]['nextReset'] - 1;
+                    $this->protectionContainer['orderTypes'][$order][$user]['nextReset'] = $current;
                 }
             }
         }
@@ -131,18 +131,18 @@ class MultiFunctionThread extends Thread
         foreach ($this->container['multiFunctionQueue'] as $order) {
             unset($this->container['multiFunctionQueue'][$order->getId()]);
             $inputs = (array)$order->getInputs();
-            if(isset($this->protectionContainer['orderTypes'][$order->getCall()])){
-                if ($this->attachOrderToUser($inputs[0], $order->getCall())) {
+            if (isset($this->protectionContainer['orderTypes'][$order->getCall()])) {
+                if ($this->attachOrderToUser($inputs[0]['player'], $order->getCall())) {
                     $listenerOrder = new Order();
                     $listenerOrder->setCall(ListenerConstants::ORDER_PROTECTION);
                     $listenerOrder->setInputs([
-                        $inputs[0],
-                        $this->protectionContainer['orderTypes'][$order->getCall()][$inputs[0]]['nextReset']
+                        $inputs[0]['player'],
+                        $this->protectionContainer['orderTypes'][$order->getCall()][$inputs[0]['player']]['nextReset']
                     ]);
                     $state = $listenerOrder->execute(true);
                     $this->container['orderListener'][$state] = $listenerOrder;
                     return;
-                }   
+                }
             }
             switch ($order->getCall()) {
                 case self::REMOVE_FRIEND:
@@ -194,6 +194,7 @@ class MultiFunctionThread extends Thread
      */
     private function removeFriend(Friend $friend, string $target, mysqli $link): void
     {
+        $player = $friend->getPlayer();
         # Delete entries from RelationState.
         $queryString = '
             DELETE FROM RelationState
@@ -202,8 +203,9 @@ class MultiFunctionThread extends Thread
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?
               OR FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $sender, $target, $target, $friend->getPlayer());
+        $stmt->bind_param('ssss', $sender, $target, $target, $player);
         $stmt->execute();
+        var_dump($stmt->error_list);
         $stmt->close();
         # Delete entries from FriendRelations.
         $queryString = '
@@ -211,8 +213,9 @@ class MultiFunctionThread extends Thread
                WHERE (base_player = ? AND friend = ?)
                OR    (base_player = ? AND friend = ?);';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $sender, $target, $target, $friend->getPlayer());
+        $stmt->bind_param('ssss', $sender, $target, $target, $player);
         $stmt->execute();
+        var_dump($stmt->error_list);
         $stmt->close();
     }
 

@@ -387,6 +387,7 @@ Note that this will never return something, so don't try to select things, only 
 Simple class to translate messages from the langKeys.ini. You can call it via Utils::Translate($messageIndex, $keys);
 Will return null or a string.
 
+
 ### MySQL Database Structure
 
 <p align="center">

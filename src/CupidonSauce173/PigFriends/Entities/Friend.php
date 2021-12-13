@@ -33,7 +33,7 @@ class Friend extends Threaded
      */
     function isFavorite(string $friend): bool
     {
-        if (array_search($friend, (array)$this->favorites) !== false) {
+        if (array_search($friend, (array)$this->favorites) !== false) { # $this->>favorites becomes a volatile after.
             return true;
         }
         return false;
