@@ -5,7 +5,7 @@ namespace CupidonSauce173\PigFriends\Lib;
 
 
 use pocketmine\form\Form as IForm;
-use pocketmine\Player;
+use pocketmine\player\Player;
 
 abstract class Form implements IForm
 {
@@ -44,6 +44,9 @@ abstract class Form implements IForm
         }
     }
 
+    /**
+     * @param $data
+     */
     function processData(&$data): void
     {
 

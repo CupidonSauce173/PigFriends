@@ -23,13 +23,14 @@ class EventsListener implements Listener
      */
     function onJoin(PlayerJoinEvent $event): void
     {
-        $player = $event->getPlayer()->getName();
-        FriendsLoader::getInstance()->container['players'][] = $player;
+        $player = $event->getPlayer();
+        $playerUuid = $player->getUniqueId()->toString();
+        FriendsLoader::getInstance()->container['players'][] = $playerUuid;
 
         # Will create a new Friend object.
         $order = new Order();
         $order->isSQL(true);
-        $order->setInputs([$player]);
+        $order->setInputs([$playerUuid, $player->getName()]);
         $order->setCall(MultiFunctionThread::CREATE_FRIEND_ENTITY);
         $order->execute();
     }
@@ -39,7 +40,7 @@ class EventsListener implements Listener
      */
     function onLeave(PlayerQuitEvent $event): void
     {
-        $player = $event->getPlayer()->getName();
+        $player = $event->getPlayer()->getUniqueId()->toString();
         $friend = Utils::getFriendEntity($player);
         if (!in_array($player, (array)FriendsLoader::getInstance()->container['players'])) return;
         unset(FriendsLoader::getInstance()->container['players'][$player]);

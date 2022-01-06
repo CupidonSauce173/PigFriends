@@ -9,7 +9,7 @@ use function mysqli_connect;
 class DatabaseProvider
 {
     /**
-     * DatabaseProvider constructor.
+     * @param array $sqlInfo
      */
     function __construct(array $sqlInfo)
     {
@@ -48,7 +48,8 @@ class DatabaseProvider
         ');
         $link->query('
         CREATE TABLE IF NOT EXISTS FriendSettings(
-           player VARCHAR(15) NOT NULL,
+           player VARCHAR(255) NOT NULL,
+           lastUsername VARCHAR(255) NOT NULL,
            request_state BOOLEAN NOT NULL DEFAULT TRUE,
            notify_state BOOLEAN NOT NULL DEFAULT FALSE,
            join_message INT NOT NULL DEFAULT 0,
@@ -58,8 +59,8 @@ class DatabaseProvider
         $link->query('
         CREATE TABLE IF NOT EXISTS FriendRequests(
            id MEDIUMINT NOT NULL AUTO_INCREMENT,
-           sender VARCHAR(15) NOT NULL,
-           receiver VARCHAR(15) NOT NULL,
+           sender VARCHAR(255) NOT NULL,
+           receiver VARCHAR(255) NOT NULL,
            reg_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
            PRIMARY KEY (id),
            FOREIGN KEY (sender) REFERENCES FriendSettings(player),
@@ -70,8 +71,8 @@ class DatabaseProvider
         $link->query('
         CREATE TABLE IF NOT EXISTS FriendRelations(
            id MEDIUMINT NOT NULL AUTO_INCREMENT,
-           base_player VARCHAR(15) NOT NULL,
-           friend VARCHAR(15) NOT NULL,
+           base_player VARCHAR(255) NOT NULL,
+           friend VARCHAR(255) NOT NULL,
            reg_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
            PRIMARY KEY (id),
            FOREIGN KEY (base_player) REFERENCES FriendSettings(player),

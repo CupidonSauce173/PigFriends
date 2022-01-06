@@ -4,10 +4,10 @@
 namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
-use Threaded;
-use function strtolower;
+use Volatile;
+use function array_search;
 
-class Friend extends Threaded
+class Friend extends Volatile
 {
     const ALL_FRIENDS = 0;
     const ONLY_FAVORITES = 1;
@@ -16,7 +16,7 @@ class Friend extends Threaded
     private array $favorites = [];
     private array $blocked = [];
     private array $requestSent = [];
-    private string $player;
+    private string $player; # is now the uniqueId instead of username
     private bool $notifyState;
     private bool $requestState;
     private int $joinMessage;
@@ -33,7 +33,8 @@ class Friend extends Threaded
      */
     function isFavorite(string $friend): bool
     {
-        if (array_search($friend, (array)$this->favorites) !== false) { # $this->>favorites becomes a volatile after.
+        # $this->>favorites becomes a volatile after.
+        if (array_search($friend, (array)$this->favorites) !== false) {
             return true;
         }
         return false;
@@ -263,7 +264,14 @@ class Friend extends Threaded
      */
     function getRequests(): ?array
     {
-        if (!isset(FriendsLoader::getInstance()->container['requests'][strtolower($this->player)])) return null;
-        return FriendsLoader::getInstance()->container['requests'][strtolower($this->player)];
+        $requests = [];
+        /** @var Request $request */
+        foreach (FriendsLoader::getInstance()->container['requests'] as $request) {
+            if ($request->getTarget() === $this->player) {
+                $requests[] = $request;
+            }
+        }
+        if (empty($requests)) return null;
+        return $requests;
     }
 }

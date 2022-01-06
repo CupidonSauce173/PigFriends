@@ -9,6 +9,8 @@ use CupidonSauce173\PigFriends\Threads\RequestThread;
 use CupidonSauce173\PigFriends\Utils\DatabaseProvider;
 use CupidonSauce173\PigFriends\Utils\Utils;
 use Exception;
+use pocketmine\permission\Permission;
+use pocketmine\permission\PermissionManager;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use Thread;
@@ -30,17 +32,9 @@ class FriendsLoader extends PluginBase
     public Volatile $container;
 
     /**
-     * @return FriendsLoader
-     */
-    public static function getInstance(): self
-    {
-        return self::$instance;
-    }
-
-    /**
      * @throws Exception
      */
-    function onEnable()
+    function onEnable(): void
     {
         # Verification of the config files.
         if (!file_exists($this->getDataFolder() . 'config.yml')) {
@@ -71,6 +65,9 @@ class FriendsLoader extends PluginBase
 
         # Start tasks
         $this->getScheduler()->scheduleRepeatingTask(new OrderListenerTask(), $this->container['config']['order-listener-task-time'] * 20);
+
+        # Register permissions
+        PermissionManager::getInstance()->addPermission(new Permission('PigFriends.' . FriendsLoader::getInstance()->container['config']['permission']));
 
         # Register the commands
         $this->getServer()->getCommandMap()->register('PigFriends', new Commands());
@@ -109,7 +106,15 @@ class FriendsLoader extends PluginBase
         $this->multiFunctionThread->start();
     }
 
-    function onDisable()
+    /**
+     * @return FriendsLoader
+     */
+    public static function getInstance(): self
+    {
+        return self::$instance;
+    }
+
+    function onDisable(): void
     {
         # Will stop all threads from running.
         $this->container['runThread'] = false;

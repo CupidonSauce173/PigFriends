@@ -5,10 +5,15 @@ namespace CupidonSauce173\PigFriends;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
+use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\Lib\FormAPI;
 use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Utils;
-use pocketmine\Player;
+use pocketmine\player\Player;
+use function array_map;
+use function count;
+use function in_array;
+use function strtolower;
 
 class UI
 {
@@ -32,20 +37,24 @@ class UI
      */
     function mainUI(Player $player): void
     {
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) {
+        $friend = Utils::getFriendEntity($player->getUniqueId()->toString());
+
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend) {
             if ($data === null) return;
-            $friend = Utils::getFriendEntity($player->getName());
             switch ($data) {
                 case 0:
                     $this->addPage($player, $friend);
                     break;
                 case 1:
-                    $this->friendsPage($player, 0, $friend);
+                    $this->friendRequestPage($player, 0, $friend);
                     break;
                 case 2:
-                    $this->settingsPage($player, $friend);
+                    $this->friendRequestPage($player, 0, $friend, true);
                     break;
                 case 3:
+                    $this->settingsPage($player, $friend);
+                    break;
+                case 4:
                     break;
             }
         });
@@ -54,6 +63,11 @@ class UI
         $ui->setContent(Utils::Translate('ui.main.content'));
         $ui->addButton(Utils::Translate('ui.button.add.friend'));
         $ui->addButton(Utils::Translate('ui.button.friends'));
+        if ($friend->getRequests() === null) {
+            $ui->addButton(Utils::Translate('ui.button.requests') . ' [0]');
+        } else {
+            $ui->addButton(Utils::Translate('ui.button.requests') . ' [' . count($friend->getRequests()) . ']');
+        }
         $ui->addButton(Utils::Translate('ui.button.settings'));
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
@@ -76,7 +90,7 @@ class UI
                 $player->sendMessage(Utils::Translate('error.already.sent', ['target' => $data[0]]));
                 return;
             }
-            if(in_array(strtolower($data[0]), array_map('strtolower', (array)$friend->getFriends()))) {
+            if (in_array(strtolower($data[0]), array_map('strtolower', (array)$friend->getFriends()))) {
                 $player->sendMessage(Utils::Translate('error.already.friend', ['friend' => $data[0]]));
                 return;
             }
@@ -85,7 +99,7 @@ class UI
             $order = new Order();
             $order->setCall(MultiFunctionThread::SEND_NEW_REQUEST);
             $order->isSQL(true);
-            $order->setInputs([$player->getName(), $data[0]]);
+            $order->setInputs([$player->getUniqueId(), $data[0]]);
             $order->execute();
         });
         $ui->setTitle(Utils::Translate('ui.main.title'));
@@ -98,14 +112,25 @@ class UI
      * @param Player $player The player that receives the UI.
      * @param int $page The current page of the player.
      * @param Friend $friend The Friend object related to the player.
+     * @param bool $forRequests
      */
-    function friendsPage(Player $player, int $page, Friend $friend): void
+    function friendRequestPage(Player $player, int $page, Friend $friend, bool $forRequests = false): void
     {
-        $friends = $friend->getFriends();
-        if (!isset($friend->getFriends()[0])) {
-            $player->sendMessage(Utils::Translate('error.no.friends'));
+        if ($forRequests) {
+            $data = $friend->getRequests();
+        } else {
+            $data = $friend->getFriends();
+        }
+
+        if (!isset($data[0])) {
+            if ($forRequests) {
+                $player->sendMessage(Utils::Translate('error.no.request'));
+            } else {
+                $player->sendMessage(Utils::Translate('error.no.friend'));
+            }
             return;
         }
+
         $name = $player->getName();
         if (!isset($this->pageContainer[$name])) {
             $this->pageContainer[$name] = ['page' => 0];
@@ -115,16 +140,20 @@ class UI
         $start = $page * $limit; # If page = 0, start = 0, if page = 0, start = 10 (if friend-per-page: 10)
         $stop = $start + $limit; # If page = 0, stop = 10 (if friend-per-page: 10), if page = 1, stop = 20 (start = 10)
 
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($name, $friend, $start, $stop, $page) {
-            if ($data === null) return;
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $pressed) use ($name, $friend, $start, $stop, $page, $forRequests, $data) {
+            if ($pressed === null) return;
 
-            $realIndex = $data + $start;
+            $realIndex = $pressed + $start;
 
-            if (isset($friend->getFriends()[$realIndex])) {
-                $this->selectedFriend($player, $friend, $friend->getFriends()[$realIndex]);
+            if (isset($data[$realIndex])) {
+                if ($forRequests) {
+                    $this->selectedRequest($player, $friend, $data[$realIndex]);
+                } else {
+                    $this->selectedFriend($player, $friend, $data[$realIndex]);
+                }
             } else {
                 if ($this->pageContainer[$name]['remains']) {
-                    $this->friendsPage($player, $page + 1, $friend);
+                    $this->friendRequestPage($player, $page + 1, $friend, $forRequests);
                 }
             }
         });
@@ -133,8 +162,14 @@ class UI
 
         $remains = true;
         for (; $start <= $stop; $start++) {
-            if (isset($friends[$start])) {
-                $ui->addButton($friends[$start]);
+            if (isset($data[$start])) {
+                if ($forRequests) {
+                    /** @var Request $request */
+                    $request = $data[$start];
+                    $ui->addButton($request->getSenderUsername());
+                } else {
+                    $ui->addButton($data[$start]);
+                }
             } else {
                 $remains = false;
                 break;
@@ -146,6 +181,43 @@ class UI
             $this->pageContainer[$name]['remains'] = true;
         }
 
+        $ui->addButton(Utils::Translate('ui.button.close'));
+        $ui->sendToPlayer($player);
+    }
+
+    /**
+     * Page to show options for the selected request from the friendsPage UI (forRequest state).
+     * @param Player $player
+     * @param Friend $friend
+     * @param Request $request
+     */
+    function selectedRequest(Player $player, Friend $friend, Request $request): void
+    {
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $data) use ($friend, $request) {
+            if ($data === null) return;
+            $order = new Order();
+            $order->isSQL(true);
+            switch ($data) {
+                case 0:
+                    $order->setInputs([$request]);
+                    $order->setCall(MultiFunctionThread::ACCEPT_REQUEST);
+                    break;
+                case 1:
+                    $order->setInputs([$request]);
+                    $order->setCall(MultiFunctionThread::REFUSE_REQUEST);
+                    break;
+                case 2:
+                    $order->setCall(MultiFunctionThread::BLOCK_PLAYER);
+                    $order->setInputs([$friend->getPlayer(), $request->getSenderUsername()]);
+                    break;
+            }
+            $order->execute(); # Note, the order will be unset in the MultiFunctionThread since there is no call to it.
+        });
+        $ui->setTitle($request->getSenderUsername());
+        $ui->setContent(Utils::Translate('ui.request.content'));
+        $ui->addButton(Utils::Translate('ui.button.request.accept'));
+        $ui->addButton(Utils::Translate('ui.button.request.reject'));
+        $ui->addButton(Utils::Translate('ui.button.block'));
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
     }

@@ -2,6 +2,9 @@
 
 namespace CupidonSauce173\PigFriends\Lib;
 
+use function count;
+use function is_array;
+
 class CustomForm extends Form
 {
     private array $labelMap = [];
@@ -17,6 +20,9 @@ class CustomForm extends Form
         $this->data['content'] = [];
     }
 
+    /**
+     * @param $data
+     */
     function processData(&$data): void
     {
         if (is_array($data)) {
@@ -37,14 +43,6 @@ class CustomForm extends Form
     }
 
     /**
-     * @param array $content
-     */
-    private function addContent(array $content): void
-    {
-        $this->data['content'][] = $content;
-    }
-
-    /**
      * @param string $text
      * @param bool|null $default
      * @param string|null $label
@@ -57,6 +55,14 @@ class CustomForm extends Form
         }
         $this->addContent($content);
         $this->labelMap[] = $label ?? count($this->labelMap);
+    }
+
+    /**
+     * @param array $content
+     */
+    private function addContent(array $content): void
+    {
+        $this->data['content'][] = $content;
     }
 
     /**

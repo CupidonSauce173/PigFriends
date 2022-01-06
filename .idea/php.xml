@@ -2,7 +2,8 @@
 <project version="4">
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="D:/repositories/libraries/PocketMine-MP-3.21.0" />
+      <path value="$PROJECT_DIR$/../../../libraries/PocketMine-MP-4.0.4" />
+      <path value="$PROJECT_DIR$/../../../libraries/uuid-main" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.4" />

@@ -9,9 +9,7 @@ use CupidonSauce173\PigFriends\Threads\MultiFunctionThread;
 use CupidonSauce173\PigFriends\Utils\Utils;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\Player;
-use pocketmine\plugin\Plugin;
+use pocketmine\player\Player;
 use pocketmine\utils\TextFormat as TF;
 use function array_search;
 use function array_shift;
@@ -20,7 +18,7 @@ use function is_int;
 use function round;
 use function strtolower;
 
-class Commands extends Command implements PluginIdentifiableCommand
+class Commands extends Command
 {
     private UI $ui;
 
@@ -46,6 +44,7 @@ class Commands extends Command implements PluginIdentifiableCommand
      */
     function execute(CommandSender $sender, string $commandLabel, array $args): void
     {
+        var_dump(FriendsLoader::getInstance()->container['friends']);
         if (FriendsLoader::getInstance()->container['config']['use-permission']) {
             if (!$sender->hasPermission($this->getPermission())) {
                 $sender->sendMessage(Utils::Translate('error.command.no.permission'));
@@ -57,7 +56,8 @@ class Commands extends Command implements PluginIdentifiableCommand
             $this->ui->mainUI($sender);
             return;
         }
-        $friend = Utils::getFriendEntity($sender->getName());
+        /** @var Player $sender */
+        $friend = Utils::getFriendEntity($sender->getUniqueId()->toString());
         if ($friend == null) return; # Means that the object is still being created.
         switch ($args[0]) {
             case 'add':
@@ -118,7 +118,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 /** @var Request $request */
                 foreach ($requests as $request) {
-                    if ($request->getSender() == $target) return;
+                    if (strtolower($request->getSender()) == $target) return;
                     $order = new Order();
                     $order->isSQL(true);
                     $order->setCall(MultiFunctionThread::ACCEPT_REQUEST);
@@ -145,7 +145,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 /** @var Request $request */
                 foreach ($requests as $request) {
-                    if ($request->getSender() == $target) return;
+                    if (strtolower($request->getSender()) == $target) return;
                     $order = new Order();
                     $order->isSQL(true);
                     $order->setCall(MultiFunctionThread::REFUSE_REQUEST);
@@ -175,7 +175,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                             }
                             $sender->sendMessage(Utils::Translate('friend.list.title'));
                             foreach ($friends as $f) {
-                                if (FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null) {
+                                if (FriendsLoader::getInstance()->getServer()->getPlayerExact($f) !== null) {
                                     $sender->sendMessage(TF::GREEN . $f);
                                 } else {
                                     $sender->sendMessage(TF::RED . $f);
@@ -193,7 +193,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                     $i = 0;
                     foreach ($friends as $f) {
                         if ($i == $maxPerPage) return;
-                        if (FriendsLoader::getInstance()->getServer()->getPlayer($f) !== null) {
+                        if (FriendsLoader::getInstance()->getServer()->getPlayerExact($f) !== null) {
                             $sender->sendMessage(TF::GREEN . $f);
                         } else {
                             $sender->sendMessage(TF::RED . $f);
@@ -213,7 +213,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                     break;
                 }
                 $target = strtolower($args[1]);
-                if (array_search($target, $friend->getBlocked())) {
+                if (array_search($target, array_map('strtolower', $friend->getBlocked()))) {
                     $sender->sendMessage(Utils::Translate('error.already.blocked', ['target' => $target]));
                     break;
                 }
@@ -226,7 +226,7 @@ class Commands extends Command implements PluginIdentifiableCommand
                     break;
                 }
                 $target = strtolower($args[1]);
-                if (!array_search($target, $friend->getBlocked())) {
+                if (!array_search($target, array_map('strtolower', $friend->getBlocked()))) {
                     $sender->sendMessage(Utils::Translate('error.not.blocked', ['target' => $target]));
                     break;
                 }
@@ -252,13 +252,5 @@ class Commands extends Command implements PluginIdentifiableCommand
                 }
                 break;
         }
-    }
-
-    /**
-     * @return Plugin
-     */
-    function getPlugin(): Plugin
-    {
-        return FriendsLoader::getInstance();
     }
 }

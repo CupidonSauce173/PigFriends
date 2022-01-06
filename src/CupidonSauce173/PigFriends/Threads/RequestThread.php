@@ -14,7 +14,6 @@ use function count;
 use function implode;
 use function microtime;
 use function str_repeat;
-use function var_dump;
 
 class RequestThread extends Thread
 {
@@ -28,6 +27,9 @@ class RequestThread extends Thread
         $this->container = $container;
     }
 
+    /**
+     * @throws Exception
+     */
     function run()
     {
         $nextTime = microtime(true) + $this->container['config']['request-check-time'];
@@ -50,13 +52,25 @@ class RequestThread extends Thread
         }
     }
 
+    /**
+     * @param mysqli $link
+     * @throws Exception
+     */
     private function processThread(mysqli $link): void
     {
         # Create, prepare & execute the query.
         $clause = implode(',', array_fill(0, count($this->container['players']), '?'));
         $types = str_repeat('s', count($this->container['players']));
         if (empty($clause) ?? empty($types)) return;
-        $stmt = $link->prepare("SELECT id,sender,receiver,reg_date FROM FriendRequests WHERE receiver IN ($clause)");
+
+        $queryString = "
+            SELECT FriendRequests.id, FriendRequests.receiver, FriendRequests.sender, FriendSettings.lastUsername as senderUsername, FriendRequests.reg_date
+            FROM ( FriendSettings
+                    INNER JOIN FriendRequests ON FriendSettings.player = FriendRequests.sender
+                 ) WHERE FriendRequests.receiver IN ($clause);
+        ";
+
+        $stmt = $link->prepare($queryString);
         $stmt->bind_param($types, ...(array)$this->container['players']);
         $stmt->execute();
 
@@ -65,19 +79,17 @@ class RequestThread extends Thread
         if ($results === false) return;
 
         while ($row = $results->fetch_assoc()) {
-            try {
-                if (array_search((int)$row['id'], $this->container['requests'][$row['receiver']])) return;
-                $dateTime = new DateTime($row['reg_date']);
-                # Build request data
-                $requestClass = new Request();
-                $requestClass->setId((int)$row['id']);
-                $requestClass->setSender($row['sender']);
-                $requestClass->setTarget($row['receiver']);
-                $requestClass->setCreationDate($dateTime);
-                $this->container['requests'][(int)$row['id']] = $requestClass;
-            } catch (Exception $e) {
-                var_dump('problem while processing row in RequestThread: ' . $e->getMessage());
-            }
+            if (isset($this->container['requests'][(int)$row['id']])) return;
+            $dateTime = new DateTime($row['reg_date']);
+            # Build request data
+            $requestClass = new Request();
+            $requestClass->setId((int)$row['id']);
+            $requestClass->setSender($row['sender']);
+            $requestClass->setSenderUsername($row['senderUsername']);
+            $requestClass->setTarget($row['receiver']);
+            $requestClass->setCreationDate($dateTime);
+            # Sets the request in the container.
+            $this->container['requests'][(int)$row['id']] = $requestClass;
         }
         $stmt->close();
     }

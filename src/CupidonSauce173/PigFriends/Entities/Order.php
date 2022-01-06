@@ -3,6 +3,7 @@
 namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
+use function uniqid;
 
 class Order
 {

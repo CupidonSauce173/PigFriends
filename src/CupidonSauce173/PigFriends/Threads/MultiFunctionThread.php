@@ -5,9 +5,11 @@ namespace CupidonSauce173\PigFriends\Threads;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\Entities\Order;
+use CupidonSauce173\PigFriends\Entities\Request;
 use CupidonSauce173\PigFriends\Utils\ListenerConstants;
 use Exception;
 use mysqli;
+use Ramsey\Uuid\UuidInterface;
 use Thread;
 use Volatile;
 use function microtime;
@@ -63,6 +65,7 @@ class MultiFunctionThread extends Thread
         $nextTime = microtime(true) + 1;
 
         include($this->container['folder'] . '\Entities\Order.php');
+        include($this->container['folder'] . '\Entities\Request.php');
         include($this->container['folder'] . '\Entities\Friend.php');
         include($this->container['folder'] . '\Utils\ListenerConstants.php');
 
@@ -81,27 +84,6 @@ class MultiFunctionThread extends Thread
                 $nextTime = microtime(true) + 1;
             }
         }
-    }
-
-    /**
-     * Method that will attach a new order to the player and return true if the player maxed out the amount of orders they can do.
-     * @param string $user
-     * @param int $order
-     * @return bool
-     */
-    private function attachOrderToUser(string $user, int $order): bool
-    {
-        if (!isset($this->protectionContainer['orderTypes'][$order][$user])) {
-            $this->protectionContainer['orderTypes'][$order][$user] = [
-                'amount' => 1,
-                'nextReset' => 60
-            ];
-            return false;
-        }
-        $amount = $this->protectionContainer['orderTypes'][$order][$user]['amount'] + 1;
-        if ($amount >= $this->container['config']['protection'][$this->protectionContainer['indexToString'][$order]]) return true;
-        $this->protectionContainer['orderTypes'][$order][$user]['amount'] = $amount;
-        return false;
     }
 
     /**
@@ -132,12 +114,12 @@ class MultiFunctionThread extends Thread
             unset($this->container['multiFunctionQueue'][$order->getId()]);
             $inputs = (array)$order->getInputs();
             if (isset($this->protectionContainer['orderTypes'][$order->getCall()])) {
-                if ($this->attachOrderToUser($inputs[0]['player'], $order->getCall())) {
+                if ($this->attachOrderToUser($inputs[0], $order->getCall())) {
                     $listenerOrder = new Order();
                     $listenerOrder->setCall(ListenerConstants::ORDER_PROTECTION);
                     $listenerOrder->setInputs([
-                        $inputs[0]['player'],
-                        $this->protectionContainer['orderTypes'][$order->getCall()][$inputs[0]['player']]['nextReset']
+                        $inputs[0],
+                        $this->protectionContainer['orderTypes'][$order->getCall()][$inputs[0]]['nextReset']
                     ]);
                     $state = $listenerOrder->execute(true);
                     $this->container['orderListener'][$state] = $listenerOrder;
@@ -153,7 +135,7 @@ class MultiFunctionThread extends Thread
                     $this->customQuery($inputs[0], $inputs[1], $link);
                     break;
                 case self::CREATE_FRIEND_ENTITY:
-                    $this->createFriendEntity($inputs[0], $link);
+                    $this->createFriendEntity($inputs[0], $inputs[1], $link);
                     break;
                 case self::UPDATE_USER_SETTINGS:
                     $this->updateUserSettings($inputs[0], $inputs[1], $link);
@@ -177,13 +159,34 @@ class MultiFunctionThread extends Thread
                     $this->refuseRequest($inputs[0], $link);
                     break;
                 case self::ACCEPT_REQUEST:
-                    $this->acceptRequest($inputs[0], $inputs[1], $link);
+                    $this->acceptRequest($inputs[0], $link);
                     break;
                 case self::SEND_NEW_REQUEST:
                     $this->sendNewRequest($inputs[0], $inputs[1], $link);
                     break;
             }
         }
+    }
+
+    /**
+     * Method that will attach a new order to the player and return true if the player maxed out the amount of orders they can do.
+     * @param string $user
+     * @param int $order
+     * @return bool
+     */
+    private function attachOrderToUser(string $user, int $order): bool
+    {
+        if (!isset($this->protectionContainer['orderTypes'][$order][$user])) {
+            $this->protectionContainer['orderTypes'][$order][$user] = [
+                'amount' => 1,
+                'nextReset' => 60
+            ];
+            return false;
+        }
+        $amount = $this->protectionContainer['orderTypes'][$order][$user]['amount'] + 1;
+        if ($amount >= $this->container['config']['protection'][$this->protectionContainer['indexToString'][$order]]) return true;
+        $this->protectionContainer['orderTypes'][$order][$user]['amount'] = $amount;
+        return false;
     }
 
     /**
@@ -194,7 +197,9 @@ class MultiFunctionThread extends Thread
      */
     private function removeFriend(Friend $friend, string $target, mysqli $link): void
     {
-        $player = $friend->getPlayer();
+        $targetUuid = $this->retrieveTargetUuid($target, $link);
+        $playerUuid = $friend->getPlayer();
+
         # Delete entries from RelationState.
         $queryString = '
             DELETE FROM RelationState
@@ -203,20 +208,43 @@ class MultiFunctionThread extends Thread
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?
               OR FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $sender, $target, $target, $player);
+        $stmt->bind_param('ssss', $playerUuid, $targetUuid, $targetUuid, $playerUuid);
         $stmt->execute();
-        var_dump($stmt->error_list);
         $stmt->close();
+
         # Delete entries from FriendRelations.
         $queryString = '
             DELETE FROM FriendRelations 
                WHERE (base_player = ? AND friend = ?)
                OR    (base_player = ? AND friend = ?);';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $sender, $target, $target, $player);
+        $stmt->bind_param('ssss', $playerUuid, $targetUuid, $targetUuid, $playerUuid);
         $stmt->execute();
-        var_dump($stmt->error_list);
         $stmt->close();
+    }
+
+    /**
+     * Will retrieve the Uuid of a player from the MySQL database.
+     * @param string $target
+     * @param mysqli $link
+     * @return string|null
+     */
+    private function retrieveTargetUuid(string $target, mysqli $link): ?string
+    {
+        $stmt = $link->prepare('SELECT player FROM FriendSettings WHERE lastUsername = ? LIMIT 1');
+        $stmt->bind_param('s', $target);
+        $stmt->execute();
+
+        # Process uuid.
+        $results = $stmt->get_result();
+        $targetUuid = false;
+        while ($row = $results->fetch_assoc()) {
+            $targetUuid = $row['player'];
+        }
+        $stmt->close();
+
+        if (!$targetUuid) return null;
+        return $targetUuid;
     }
 
     /**
@@ -235,30 +263,33 @@ class MultiFunctionThread extends Thread
 
     /**
      * Method to create the friend entity.
-     * @param string $player
+     * @param string $playerUuid
+     * @param string $lastUsername
      * @param mysqli $link
      */
-    private function createFriendEntity(string $player, mysqli $link): void
+    private function createFriendEntity(string $playerUuid, string $lastUsername, mysqli $link): void
     {
         # Creating the friend entity.
         $entity = new Friend();
-        $entity->setPlayer($player);
+        $entity->setPlayer($playerUuid);
+
         # Prepare & Execute query to verify if player exists in the database & create it if it doesn't.
-        $queryString =
-            'INSERT INTO FriendSettings (player)
-                 SELECT * FROM ( SELECT ? ) as tmp
+        $queryString = sprintf(
+            "INSERT INTO FriendSettings (player,lastUsername)
+                 SELECT * FROM ( SELECT '%s', '%s' ) as tmp
                     WHERE NOT EXISTS (
-                        SELECT player FROM FriendSettings WHERE player = ?
-                    ) LIMIT 1;';
+                        SELECT player FROM FriendSettings WHERE player = ? AND lastUsername = ?
+                    ) LIMIT 1;",
+            $playerUuid, $lastUsername);
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ss', $player, $player);
+        $stmt->bind_param('ss', $playerUuid, $lastUsername);
         $stmt->execute();
         $stmt->close();
 
         # Prepare & Execute query to get player settings.
         $queryString = "SELECT request_state, notify_state, join_message FROM FriendSettings WHERE player = ? LIMIT 1;";
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('s', $player);
+        $stmt->bind_param('s', $playerUuid);
         $stmt->execute();
 
         # Process data.
@@ -279,7 +310,7 @@ class MultiFunctionThread extends Thread
                       INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
                    ) WHERE FriendSettings.player = ?;';
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('s', $player);
+        $stmt->bind_param('s', $playerUuid);
         $stmt->execute();
 
         # Process data.
@@ -313,10 +344,10 @@ class MultiFunctionThread extends Thread
     private function updateUserSettings(Friend $friend, array $data, mysqli $link): void
     {
         # Preparing values
-        $n = (int)$data[0];
-        $r = (int)$data[1];
-        $j = $data[2];
-        $player = $friend->getPlayer();
+        $notification = (int)$data[0];
+        $request = (int)$data[1];
+        $joinMessage = $data[2];
+        $playerUuid = $friend->getPlayer();
 
         $friend->setNotifyState($data[0]);
         $friend->setRequestState($data[1]);
@@ -324,7 +355,7 @@ class MultiFunctionThread extends Thread
 
         # Updating user settings in MySQL.
         $stmt = $link->prepare('UPDATE FriendSettings SET request_state = ?, notify_state = ?, join_message = ? WHERE player = ?;');
-        $stmt->bind_param('iiis', $n, $r, $j, $player);
+        $stmt->bind_param('iiis', $request, $notification, $joinMessage, $playerUuid);
         $stmt->execute();
         $stmt->close();
     }
@@ -339,6 +370,9 @@ class MultiFunctionThread extends Thread
     private function addRemoveFavorite(Friend $friend, string $target, int $option, mysqli $link): void
     {
 
+        $targetUuid = $this->retrieveTargetUuid($target, $link);
+
+        # Locally remove the friend from the favorite list.
         if ($option === self::ADD_FAVORITE) {
             $state = 1;
             $friend->addFavorite($target);
@@ -347,49 +381,15 @@ class MultiFunctionThread extends Thread
             $friend->removeFavorite($target);
         }
 
-        # Updating RelationState to "favorite"
+        # Updating RelationState to "favorite" in MySQL
         $queryString = '
             UPDATE RelationState SET is_favorite = ?
             WHERE relation_id = (SELECT FriendRelations.id FROM (
                 FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_Player
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
-        $player = $friend->getPlayer();
+        $playerUuid = $friend->getPlayer();
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('iss', $state, $player, $target);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    /**
-     * Method to unblock someone from sending friend requests to the player.
-     * @param Friend $friend
-     * @param string $target
-     * @param mysqli $link
-     * @param bool $inverseFriendTarget
-     */
-    private function unblockPlayer(Friend $friend, string $target, mysqli $link, bool $inverseFriendTarget = false): void
-    {
-        if ($inverseFriendTarget) {
-            $player = $target;
-            $target = $player;
-        } else {
-            $player = $friend->getPlayer();
-        }
-
-        # First, delete RelationState entry.
-        $queryString = '
-            DELETE FROM RelationState
-            WHERE relation_id = (SELECT FriendRelations.id FROM (
-                FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
-            ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
-        $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ss', $player, $target);
-        $stmt->execute();
-        $stmt->close();
-
-        # Second, delete the FriendRelation entry.
-        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?;');
-        $stmt->bind_param('ss', $player, $target);
+        $stmt->bind_param('iss', $state, $playerUuid, $targetUuid);
         $stmt->execute();
         $stmt->close();
     }
@@ -402,7 +402,24 @@ class MultiFunctionThread extends Thread
      */
     private function blockPlayer(Friend $friend, string $target, mysqli $link): void
     {
-        $player = $friend->getPlayer();
+        $playerUuid = $friend->getPlayer();
+
+        /** @var Request $request */
+        foreach ($friend->getRequests() as $request) {
+            if ($request->getSenderUsername() === $target) {
+                $id = $request->getId();
+                $targetUuid = $request->getSender();
+                # Delete the request in the database and locally.
+                unset($this->container['requests'][$id]);
+                $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?;');
+                $stmt->bind_param('i', $id);
+                $stmt->execute();
+                $stmt->close();
+            } else {
+                $targetUuid = $this->retrieveTargetUuid($target, $link);
+            }
+        }
+
         if ((array)in_array($target, $friend->getFriends())) {
             # Process if $target & $friend are friends.
             $friend->removeFriend($target);
@@ -415,12 +432,12 @@ class MultiFunctionThread extends Thread
                 FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_Player
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.Friend = ?);';
 
-            $this->unblockPlayer($friend, $target, $link, true);
+            $this->unblockPlayer($friend->getPlayer(), $targetUuid, $link, true);
         } else {
             # Process if they aren't friends.
             $queryString = 'INSERT INTO FriendRelations (base_player,friend) VALUES (?,?)'; # First create the new relation.
             $stmt = $link->prepare($queryString);
-            $stmt->bind_param('ss', $player, $target);
+            $stmt->bind_param('ss', $playerUuid, $targetUuid);
             $stmt->execute();
             $stmt->close();
 
@@ -431,58 +448,112 @@ class MultiFunctionThread extends Thread
             ) WHERE FriendRelations.base_player = ? AND FriendRelations.Friend = ?);'; # Then setting it as blocked.
         }
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ss', $player, $target);
+        $stmt->bind_param('ss', $playerUuid, $targetUuid);
         $stmt->execute();
         $stmt->close();
 
-        $friend->blockPlayer($target); # And  block player locally.
+        $friend->blockPlayer($target); # And block player locally.
+    }
+
+    /**
+     * Method to unblock someone from sending friend requests to the player.
+     * @param string $friendUuid
+     * @param string $target
+     * @param mysqli $link
+     * @param bool $reverseFriendTarget
+     */
+    private function unblockPlayer(string $friendUuid, string $target, mysqli $link, bool $reverseFriendTarget = false): void
+    {
+        $targetUuid = $this->retrieveTargetUuid($target, $link);
+
+        if ($reverseFriendTarget) {
+            $player = $targetUuid;
+            $targetUuid = $player;
+        } else {
+            $player = $friendUuid;
+        }
+
+        # First, delete RelationState entry.
+        $queryString = '
+            DELETE FROM RelationState
+            WHERE relation_id = (SELECT FriendRelations.id FROM (
+                FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
+            ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
+        $stmt = $link->prepare($queryString);
+        $stmt->bind_param('ss', $player, $targetUuid);
+        $stmt->execute();
+        $stmt->close();
+
+        # Second, delete the FriendRelation entry.
+        $stmt = $link->prepare('DELETE FROM FriendRelations WHERE base_player = ? AND friend = ?;');
+        $stmt->bind_param('ss', $player, $targetUuid);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**
      * Method to delete the request from the MySQL server.
-     * @param int $requestId
+     * @param Request $request
      * @param mysqli $link
      */
-    private function refuseRequest(int $requestId, mysqli $link): void
+    private function refuseRequest(Request $request, mysqli $link): void
     {
+        $id = $request->getId();
+        unset($this->container['requests'][$id]);
+
         $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?;');
-        $stmt->bind_param('i', $requestId);
+        $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
     }
 
     /**
      * Method to create a new friendship in the MySQL server and delete the request.
-     * @param string $player
-     * @param array $requestData
+     * @param Request $request
      * @param mysqli $link
      */
-    private function acceptRequest(string $player, array $requestData, mysqli $link): void
+    private function acceptRequest(Request $request, mysqli $link): void
     {
+        $playerUuid = $request->getTarget();
+        $targetUuid = $request->getSender();
+        $requestId = $request->getId();
+
+        unset($this->container['requests'][$requestId]);
+
         # Deleting the friend request.
         $stmt = $link->prepare('DELETE FROM FriendRequests WHERE id = ?;');
-        $stmt->bind_param('i', $requestData['id']);
+        $stmt->bind_param('i', $requestId);
         $stmt->execute();
         $stmt->close();
 
-        # Creating first relation base_player -> friend.
+        # Creating relation rows
         $stmt = $link->prepare('INSERT INTO FriendRelations (base_player,friend) VALUES (?,?), (?,?);');
-        $stmt->bind_param('ssss', $player, $requestData['friend'], $requestData['friend'], $player);
+        $stmt->bind_param('ssss', $playerUuid, $targetUuid, $targetUuid, $playerUuid);
         $stmt->execute();
         $stmt->close();
     }
 
     /**
      * Method to create a new request in the MySQL server.
-     * @param string $author
+     * @param UuidInterface $uuid
      * @param string $target
      * @param mysqli $link
      */
-    private function sendNewRequest(string $author, string $target, mysqli $link): void
+    private function sendNewRequest(UuidInterface $uuid, string $target, mysqli $link): void
     {
-        # %a = author, %t = target
-        $queryString =
-            sprintf("
+        $authorUuid = $uuid->toString();
+        $targetUuid = $this->retrieveTargetUuid($target, $link);
+
+        if ($targetUuid === null) {
+            $order = new Order();
+            $order->setCall(ListenerConstants::USER_NOT_CREATED);
+            $order->setInputs([$uuid, $target]);
+            $state = $order->execute(true);
+            $this->container['orderListener'][$state] = $order;
+            return;
+        }
+
+        $queryString = sprintf("
             INSERT INTO FriendRequests (sender, receiver)
             SELECT * FROM 
             ( SELECT '%s', '%s') as tmp
@@ -496,32 +567,23 @@ class MultiFunctionThread extends Thread
                  INNER JOIN RelationState on FriendRelations.id = RelationState.relation_id
               ) WHERE FriendSettings.player = ?), FALSE)
             ) = FALSE LIMIT 1;
-            ", $author, $target);
+            ", $authorUuid, $targetUuid);
+
         $stmt = $link->prepare($queryString);
-        $stmt->bind_param('sss', $author, $target, $target);
+        $stmt->bind_param('sss', $authorUuid, $targetUuid, $targetUuid);
         $stmt->execute();
 
         $order = new Order();
         $order->isSQL(false);
         if ($stmt->affected_rows === 0) {
             $order->setCall(ListenerConstants::REQUEST_ALREADY_EXISTS);
-            $order->setInputs([$author, $target]);
+            $order->setInputs([$uuid, $target]);
         } elseif ($stmt->affected_rows === 1) {
             $order->setCall(ListenerConstants::REQUEST_CREATED);
-            $order->setInputs([$author, $target]);
+            $order->setInputs([$uuid, $target]);
         } else {
-            if (isset($stmt->error_list[0])) {
-                if ($stmt->error_list[0]['errno'] === 1452) {
-                    $order->setCall(ListenerConstants::USER_NOT_CREATED);
-                    $order->setInputs([$author, $target]);
-                } else {
-                    $order->setCall(ListenerConstants::UNKNOWN_ERROR);
-                    $order->setInputs([$author, $target, self::SEND_NEW_REQUEST]);
-                }
-            } else {
-                $order->setCall(ListenerConstants::UNKNOWN_ERROR);
-                $order->setInputs([$author, $target, self::SEND_NEW_REQUEST]);
-            }
+            $order->setCall(ListenerConstants::UNKNOWN_ERROR);
+            $order->setInputs([$uuid, $target, self::SEND_NEW_REQUEST]);
         }
         $state = $order->execute(true);
         $this->container['orderListener'][$state] = $order;

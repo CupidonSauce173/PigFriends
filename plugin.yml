@@ -1,6 +1,6 @@
 name: PigFriends
 main: CupidonSauce173\PigFriends\FriendsLoader
-version: 1.0.0
-api: 3.21.0
+version: 1.5.0
+api: 4.0.0
 author: CupidonSauce173
 description: MultiThreaded Friends System using Jojoe's code for the UI system.

@@ -6,17 +6,15 @@ use CupidonSauce173\PigFriends\Entities\Order;
 use CupidonSauce173\PigFriends\FriendsLoader;
 use CupidonSauce173\PigFriends\Utils\ListenerConstants;
 use CupidonSauce173\PigFriends\Utils\Utils;
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\scheduler\Task;
+use Ramsey\Uuid\UuidInterface;
 
 class OrderListenerTask extends Task
 {
-
-    /**
-     * @param int $currentTick
-     */
-    public function onRun(int $currentTick)
+    public function onRun(): void
     {
+        var_dump(FriendsLoader::getInstance()->container['requests']);
         /*
          * This class will listen to any special state of the Order objects
          * Example, when there is a SEND_NEW_REQUEST order called and the order already exists,
@@ -47,53 +45,13 @@ class OrderListenerTask extends Task
     }
 
     /**
-     * Notify the player that they reached the max amount of times they can perform an action and must wait x amount of time before doing it again.
-     * @param string $user
-     * @param int $nextReset
-     */
-    private function orderProtectionMessage(string $user, int $nextReset): void
-    {
-        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
-        if($player instanceof Player) {
-            $player->sendMessage(Utils::Translate('error.order.protection', ['nextReset' => $nextReset]));
-        }
-    }
-
-    /**
-     * Notify the player that an unknown error occurred. Will show some information.
-     * @param string $user
-     * @param string $target
-     * @param int $methodCalled
-     */
-    private function unknownError(string $user, string $target, int $methodCalled): void
-    {
-        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
-        if ($player instanceof Player) {
-            $player->sendMessage(Utils::Translate('error.unknown', ['target' => $target, 'event' => (string)$methodCalled]));
-        }
-    }
-
-    /**
-     * Notify the player that the target isn't registered in the database.
-     * @param string $user
-     * @param string $target
-     */
-    private function userNotRegistered(string $user, string $target): void
-    {
-        $player = FriendsLoader::getInstance()->getServer()->getPlayer($user);
-        if ($player instanceof Player) {
-            $player->sendMessage(Utils::Translate('error.player.not.registered', ['target' => $target]));
-        }
-    }
-
-    /**
      * Will send an error message to the player informing them that the request already exists.
-     * @param string $author
+     * @param UuidInterface $uuid
      * @param string $receiver
      */
-    private function requestAlreadyExists(string $author, string $receiver): void
+    private function requestAlreadyExists(UuidInterface $uuid, string $receiver): void
     {
-        $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
+        $player = FriendsLoader::getInstance()->getServer()->getPlayerByUUID($uuid);
         if ($player instanceof Player) {
             $player->sendMessage(Utils::Translate('error.already.already.sent', ['target' => $receiver]));
         }
@@ -101,14 +59,54 @@ class OrderListenerTask extends Task
 
     /**
      * Will send a confirmation message that the request has been created.
-     * @param string $author
+     * @param UuidInterface $uuid
      * @param string $receiver
      */
-    private function requestCreated(string $author, string $receiver): void
+    private function requestCreated(UuidInterface $uuid, string $receiver): void
     {
-        $player = FriendsLoader::getInstance()->getServer()->getPlayer($author);
+        $player = FriendsLoader::getInstance()->getServer()->getPlayerByUUID($uuid);
         if ($player instanceof Player) {
             $player->sendMessage(Utils::Translate('utils.request.sent', ['target' => $receiver]));
+        }
+    }
+
+    /**
+     * Notify the player that the target isn't registered in the database.
+     * @param UuidInterface $uuid
+     * @param string $target
+     */
+    private function userNotRegistered(UuidInterface $uuid, string $target): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayerByUUID($uuid);
+        if ($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.player.not.registered', ['target' => $target]));
+        }
+    }
+
+    /**
+     * Notify the player that an unknown error occurred. Will show some information.
+     * @param UuidInterface $uuid
+     * @param string $target
+     * @param int $methodCalled
+     */
+    private function unknownError(UuidInterface $uuid, string $target, int $methodCalled): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayerByUUID($uuid);
+        if ($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.unknown', ['target' => $target, 'event' => (string)$methodCalled]));
+        }
+    }
+
+    /**
+     * Notify the player that they reached the max amount of times they can perform an action and must wait x amount of time before doing it again.
+     * @param UuidInterface $uuid
+     * @param int $nextReset
+     */
+    private function orderProtectionMessage(UuidInterface $uuid, int $nextReset): void
+    {
+        $player = FriendsLoader::getInstance()->getServer()->getPlayerByUUID($user);
+        if ($player instanceof Player) {
+            $player->sendMessage(Utils::Translate('error.order.protection', ['nextReset' => $nextReset]));
         }
     }
 }

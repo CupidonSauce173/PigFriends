@@ -6,6 +6,7 @@ namespace CupidonSauce173\PigFriends\Utils;
 
 use CupidonSauce173\PigFriends\Entities\Friend;
 use CupidonSauce173\PigFriends\FriendsLoader;
+use function array_search;
 use function str_replace;
 
 class Utils
@@ -29,15 +30,15 @@ class Utils
     }
 
     /**
-     * Gets a Friend entity from a username
-     * @param string $target
+     * Gets a Friend entity from a UniqueId string
+     * @param string $targetUniqueId
      * @return Friend
      */
-    static function getFriendEntity(string $target): ?Friend
+    static function getFriendEntity(string $targetUniqueId): ?Friend
     {
         /** @var Friend $friend */
         foreach (FriendsLoader::getInstance()->container['friends'] as $index => $friend) {
-            if ($friend->getPlayer() === $target) {
+            if ($friend->getPlayer() === $targetUniqueId) {
                 return $friend;
             }
         }
