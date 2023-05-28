@@ -112,9 +112,17 @@ class MultiFunctionThread extends Thread
         /** @var Order $order */
         foreach ($this->container['multiFunctionQueue'] as $order) {
             unset($this->container['multiFunctionQueue'][$order->getId()]);
-            $inputs = (array)$order->getInputs();
+            $inputs = $order->getInputs();
+            var_dump($inputs);
             if (isset($this->protectionContainer['orderTypes'][$order->getCall()])) {
-                if ($this->attachOrderToUser($inputs[0], $order->getCall())) {
+                if($inputs[0] instanceof UuidInterface) {
+                    $uuid = $inputs[0]->__toString();
+                } elseif ($inputs[0] instanceof Friend) {
+                        $uuid = $inputs[0]->getPlayer();
+                } else {
+                    $uuid = $inputs['uuid'];
+                }
+                if ($this->attachOrderToUser($uuid, $order->getCall())) {
                     $listenerOrder = new Order();
                     $listenerOrder->setCall(ListenerConstants::ORDER_PROTECTION);
                     $listenerOrder->setInputs([
@@ -200,23 +208,17 @@ class MultiFunctionThread extends Thread
         $targetUuid = $this->retrieveTargetUuid($target, $link);
         $playerUuid = $friend->getPlayer();
 
-        # Delete entries from RelationState.
         $queryString = '
-            DELETE FROM RelationState
-            WHERE relation_id = (SELECT FriendRelations.id FROM (
-                FriendSettings INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
-            ) WHERE FriendRelations.base_player = ? AND FriendRelations.friend = ?
-              OR FriendRelations.base_player = ? AND FriendRelations.friend = ?);';
-        $stmt = $link->prepare($queryString);
-        $stmt->bind_param('ssss', $playerUuid, $targetUuid, $targetUuid, $playerUuid);
-        $stmt->execute();
-        $stmt->close();
+        DELETE rs, fr
+        FROM RelationState rs
+        JOIN FriendRelations fr ON rs.relation_id = fr.id
+        JOIN FriendSettings fs ON fr.base_player = fs.player
+        WHERE (
+            fr.base_player = ? AND fr.friend = ?
+        ) OR (
+            fr.base_player = ? AND fr.friend = ?
+        );';
 
-        # Delete entries from FriendRelations.
-        $queryString = '
-            DELETE FROM FriendRelations 
-               WHERE (base_player = ? AND friend = ?)
-               OR    (base_player = ? AND friend = ?);';
         $stmt = $link->prepare($queryString);
         $stmt->bind_param('ssss', $playerUuid, $targetUuid, $targetUuid, $playerUuid);
         $stmt->execute();
@@ -231,7 +233,7 @@ class MultiFunctionThread extends Thread
      */
     private function retrieveTargetUuid(string $target, mysqli $link): ?string
     {
-        $stmt = $link->prepare('SELECT player FROM FriendSettings WHERE lastUsername = ? LIMIT 1');
+        $stmt = $link->prepare('SELECT player FROM FriendSettings WHERE lastUsername = ?');
         $stmt->bind_param('s', $target);
         $stmt->execute();
 
@@ -303,12 +305,23 @@ class MultiFunctionThread extends Thread
 
         # Prepare & Execute query to get all friend relations targeted to the player.
         $queryString =
-            'SELECT
-              FriendRelations.friend, RelationState.is_favorite, RelationState.is_blocked
+            'SELECT FriendRelations.friend, RelationState.is_favorite, RelationState.is_blocked
               FROM ( FriendSettings
                       INNER JOIN FriendRelations ON FriendSettings.player = FriendRelations.base_player
                       INNER JOIN RelationState ON FriendRelations.id = RelationState.relation_id
                    ) WHERE FriendSettings.player = ?;';
+        $queryString =
+            '
+            SELECT
+                a.player, FriendRelations.friend,
+                b.lastUsername, relationState.is_favorite,
+                RelationState.is_blocked
+            FROM FriendSettings a
+            JOIN FriendRelations ON a.player = FriendRelations.base_player
+            JOIN FriendSettings b ON FriendRelations.friend = b.player
+            JOIN RelationState ON FriendRelations.id = RelationState.relation_id
+            WHERE a.player = ?;
+            ';
         $stmt = $link->prepare($queryString);
         $stmt->bind_param('s', $playerUuid);
         $stmt->execute();
@@ -326,7 +339,7 @@ class MultiFunctionThread extends Thread
             if ($relation['is_blocked']) {
                 $entity->blockPlayer($relation['friend']);
             } else {
-                $entity->addFriend($relation['friend']);
+                $entity->addFriend($relation['friend'], $relation['lastUsername']);
                 if ($relation['is_favorite']) {
                     $entity->addFavorite($relation['friend']);
                 }

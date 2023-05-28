@@ -116,69 +116,52 @@ class UI
      */
     function friendRequestPage(Player $player, int $page, Friend $friend, bool $forRequests = false): void
     {
-        if ($forRequests) {
-            $data = $friend->getRequests();
-        } else {
-            $data = $friend->getFriends();
-        }
+        $data = $forRequests ? $friend->getRequests() : $friend->getFriends();
 
-        if (!isset($data[0])) {
-            if ($forRequests) {
-                $player->sendMessage(Utils::Translate('error.no.request'));
-            } else {
-                $player->sendMessage(Utils::Translate('error.no.friend'));
-            }
+        if (empty($data)) {
+            $errorMessage = $forRequests ? 'error.no.request' : 'error.no.friend';
+            $this->displayErrorMessage($player, $errorMessage);
             return;
         }
 
         $name = $player->getName();
-        if (!isset($this->pageContainer[$name])) {
-            $this->pageContainer[$name] = ['page' => 0];
-        }
+        $limit = (int) FriendsLoader::getInstance()->container['config']['friend-per-page'];
+        $start = $page * $limit;
+        $stop = $start + $limit;
 
-        $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
-        $start = $page * $limit; # If page = 0, start = 0, if page = 0, start = 10 (if friend-per-page: 10)
-        $stop = $start + $limit; # If page = 0, stop = 10 (if friend-per-page: 10), if page = 1, stop = 20 (start = 10)
+        $ui = $this->uiApi->createSimpleForm(function (Player $player, $pressed) use ($name, $friend, $start, $page, $forRequests, $data, $limit) {
+            if ($pressed === null) {
+                return;
+            }
 
-        $ui = $this->uiApi->createSimpleForm(function (Player $player, $pressed) use ($name, $friend, $start, $stop, $page, $forRequests, $data) {
-            if ($pressed === null) return;
-
-            $realIndex = $pressed + $start;
+            $realIndex = $start + $pressed;
 
             if (isset($data[$realIndex])) {
                 if ($forRequests) {
                     $this->selectedRequest($player, $friend, $data[$realIndex]);
                 } else {
-                    $this->selectedFriend($player, $friend, $data[$realIndex]);
+                    $this->selectedFriend($player, $friend, $data[$realIndex][1]);
                 }
             } else {
-                if ($this->pageContainer[$name]['remains']) {
+                if ($this->hasRemains($name, $limit, (array) $data)) {
                     $this->friendRequestPage($player, $page + 1, $friend, $forRequests);
                 }
             }
         });
+
         $ui->setTitle(Utils::Translate('ui.main.title'));
         $ui->setContent(Utils::Translate('ui.friend.list.content'));
 
-        $remains = true;
-        for (; $start <= $stop; $start++) {
+        for (; $start < $stop; $start++) {
             if (isset($data[$start])) {
-                if ($forRequests) {
-                    /** @var Request $request */
-                    $request = $data[$start];
-                    $ui->addButton($request->getSenderUsername());
-                } else {
-                    $ui->addButton($data[$start]);
-                }
+                $ui->addButton($forRequests ? $data[$start]->getSenderUsername() : $data[$start][1]);
             } else {
-                $remains = false;
                 break;
             }
         }
-        $this->pageContainer[$name]['remains'] = false;
-        if ($remains) {
+
+        if ($this->hasRemains($name, $limit, (array) $data)) {
             $ui->addButton(Utils::Translate('ui.button.next'));
-            $this->pageContainer[$name]['remains'] = true;
         }
 
         $ui->addButton(Utils::Translate('ui.button.close'));
@@ -335,5 +318,23 @@ class UI
                 Utils::Translate('ui.settings.dropdown.all.friends')
             ], $friend->getJoinSetting());
         $ui->sendToPlayer($player);
+    }
+
+    private function displayErrorMessage(Player $player, string $errorMessage): void
+    {
+        $player->sendMessage(Utils::Translate($errorMessage));
+    }
+
+    private function getPageContainer(string $name): array
+    {
+        return $this->pageContainer[$name] ?? ['page' => 0, 'remains' => false];
+    }
+
+    private function hasRemains(string $name, int $limit, array $data): bool
+    {
+        $pageContainer = $this->getPageContainer($name);
+        $start = $pageContainer['page'] * $limit;
+        $stop = $start + $limit;
+        return $stop < count($data);
     }
 }

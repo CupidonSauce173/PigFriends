@@ -16,7 +16,7 @@ class Friend extends Volatile
     private array $favorites = [];
     private array $blocked = [];
     private array $requestSent = [];
-    private string $player; # is now the uniqueId instead of username
+    private string $uuid; # is now the uniqueId instead of username
     private bool $notifyState;
     private bool $requestState;
     private int $joinMessage;
@@ -33,11 +33,7 @@ class Friend extends Volatile
      */
     function isFavorite(string $friend): bool
     {
-        # $this->>favorites becomes a volatile after.
-        if (array_search($friend, (array)$this->favorites) !== false) {
-            return true;
-        }
-        return false;
+        return in_array($friend, (array) $this->favorites);
     }
 
     /**
@@ -163,21 +159,21 @@ class Friend extends Volatile
     }
 
     /**
-     * Method to return the player username of the Friend.
+     * Method to return the player uuid of the Friend.
      * @return string
      */
     function getPlayer(): string
     {
-        return $this->player;
+        return $this->uuid;
     }
 
     /**
      * Method to set the player username.
-     * @param string $username
+     * @param string $uuid
      */
-    function setPlayer(string $username): void
+    function setPlayer(string $uuid): void
     {
-        $this->player = $username;
+        $this->uuid = $uuid;
     }
 
     /**
@@ -187,75 +183,76 @@ class Friend extends Volatile
      */
     function addFavorite(string $target): bool
     {
-        if (isset($this->favorites[$target])) return false;
-        $this->favorites[] = $target;
+        $friendData = $this->findArrayInDataArray($this->friends, $target);
+        if($friendData == null) return false;
+        $this->favorites[] = [$friendData[0], $friendData[1]];
         return true;
     }
 
     /**
      * Method to remove a friend from the favorites.
-     * @param string $target Friend to remove from the favorites
+     * @param string $targetUuid Friend to remove from the favorites
      * @return bool
      */
-    function removeFavorite(string $target): bool
+    function removeFavorite(string $targetUuid): bool
     {
-        if (isset($this->favorites[$target])) {
-            unset($this->favorites[$target]);
-            return true;
-        }
+        $favoriteData = $this->findArrayInDataArray($this->favorites, $targetUuid);
+        if($favoriteData == null) return false;
+        unset($this->favorites[$favoriteData]);
         return false;
     }
 
     /**
      * Method to add a player to the blocked list.
-     * @param string $target The player to block
+     * @param string $targetUuid The player uuid to block
+     * @param string $targetUsername The player username to block.
      * @return bool
      */
-    function blockPlayer(string $target): bool
+    function blockPlayer(string $targetUuid, string $targetUsername): bool
     {
-        if (isset($this->blocked[$target])) return false;
-        $this->blocked[] = $target;
+        $blockedData = $this->findArrayInDataArray($this->blocked, $targetUuid);
+        if($blockedData != null) return false;
+        $this->blocked[] = [$targetUuid, $targetUsername];
         return true;
     }
 
     /**
      * Method to remove a player from the blocked list.
-     * @param string $target The player to unblock.
+     * @param string $targetUuid The player uuid to unblock.
      * @return bool
      */
-    function unblockPlayer(string $target): bool
+    function unblockPlayer(string $targetUuid): bool
     {
-        if (isset($this->blocked[$target])) {
-            unset($this->blocked[$target]);
-            return true;
-        }
-        return false;
+        $blockedData = $this->findArrayInDataArray($this->blocked, $targetUuid);
+        if($blockedData == null) return false;
+        unset($this->blocked[$blockedData]);
+        return true;
     }
 
     /**
      * Method to add a player to a friend list.
-     * @param string $target The player to add
+     * @param string $targetUuid The player uuid to add.
+     * @param string $friendUsername The player username.
      * @return bool
      */
-    function addFriend(string $target): bool
+    function addFriend(string $targetUuid, string $friendUsername): bool
     {
-        if (isset($this->friends[$target])) return false;
-        $this->friends[] = $target;
+        if (isset($this->friends[$targetUuid])) return false;
+        $this->friends[] = [$targetUuid, $friendUsername];
         return true;
     }
 
     /**
      * Method to remove a friend from a friend list.
-     * @param string $target The player to remove
+     * @param string $targetUuid The target uuid to remove
      * @return bool
      */
-    function removeFriend(string $target): bool
+    function removeFriend(string $targetUuid): bool
     {
-        if (isset($this->friends[$target])) {
-            unset($this->friends[$target]);
-            return true;
-        }
-        return false;
+        $friendData = $this->findArrayInDataArray($this->friends, $targetUuid);
+        if($friendData == null) return false;
+        unset($this->friends[$friendData]);
+        return true;
     }
 
     /**
@@ -267,11 +264,19 @@ class Friend extends Volatile
         $requests = [];
         /** @var Request $request */
         foreach (FriendsLoader::getInstance()->container['requests'] as $request) {
-            if ($request->getTarget() === $this->player) {
+            if ($request->getTarget() === $this->uuid) {
                 $requests[] = $request;
             }
         }
         if (empty($requests)) return null;
         return $requests;
+    }
+
+    private function findArrayInDataArray($data, $target)
+    {
+        foreach((array) $data as $subArray) {
+            if(in_array($target, (array) $subArray)) return $subArray;
+        }
+        return null;
     }
 }

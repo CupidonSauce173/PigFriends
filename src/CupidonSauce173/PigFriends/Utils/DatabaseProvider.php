@@ -92,6 +92,7 @@ class DatabaseProvider
 
         # FriendRelationTrigger will create a new entry in the RelationState table
         # when a new FriendRelation entry has been created.
+        /*
         $link->query('
         CREATE TRIGGER FriendRelationTrigger 
           AFTER INSERT
@@ -101,5 +102,6 @@ class DatabaseProvider
           END;
         ');
         $link->close();
+        */
     }
 }

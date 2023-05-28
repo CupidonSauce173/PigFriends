@@ -96,7 +96,7 @@ class Commands extends Command
                 }
                 $target = $args[1];
                 foreach ($friend->getFriends() as $pFriend) {
-                    if (strtolower($pFriend) == strtolower($target)) {
+                    if (strtolower($pFriend[1]) == strtolower($target)) {
                         $friend->removeFriend(strtolower($target));
                         $sender->sendMessage(Utils::Translate('utils.friend.removed', ['friend' => $target]));
                         break;
@@ -217,7 +217,7 @@ class Commands extends Command
                     $sender->sendMessage(Utils::Translate('error.already.blocked', ['target' => $target]));
                     break;
                 }
-                $friend->blockPlayer($target);
+                $friend->blockPlayer('', $target);
                 $sender->sendMessage(Utils::Translate('utils.player.blocked', ['target' => $target]));
                 break;
             case 'unblock':
