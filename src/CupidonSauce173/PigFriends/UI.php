@@ -125,9 +125,8 @@ class UI
         }
 
         $name = $player->getName();
-        $limit = (int) FriendsLoader::getInstance()->container['config']['friend-per-page'];
+        $limit = (int)FriendsLoader::getInstance()->container['config']['friend-per-page'];
         $start = $page * $limit;
-        $stop = $start + $limit;
 
         $ui = $this->uiApi->createSimpleForm(function (Player $player, $pressed) use ($name, $friend, $start, $page, $forRequests, $data, $limit) {
             if ($pressed === null) {
@@ -135,6 +134,8 @@ class UI
             }
 
             $realIndex = $start + $pressed;
+            var_dump($realIndex);
+            var_dump($data);
 
             if (isset($data[$realIndex])) {
                 if ($forRequests) {
@@ -143,7 +144,7 @@ class UI
                     $this->selectedFriend($player, $friend, $data[$realIndex][1]);
                 }
             } else {
-                if ($this->hasRemains($name, $limit, (array) $data)) {
+                if ($this->hasRemains($name, $limit, (array)$data)) {
                     $this->friendRequestPage($player, $page + 1, $friend, $forRequests);
                 }
             }
@@ -152,20 +153,28 @@ class UI
         $ui->setTitle(Utils::Translate('ui.main.title'));
         $ui->setContent(Utils::Translate('ui.friend.list.content'));
 
-        for (; $start < $stop; $start++) {
-            if (isset($data[$start])) {
-                $ui->addButton($forRequests ? $data[$start]->getSenderUsername() : $data[$start][1]);
+        $remainingData = array_slice((array)$data, $start, $limit);
+
+        foreach ($remainingData as $item) {
+            if ($forRequests) {
+                $ui->addButton($item->getSenderUsername());
             } else {
-                break;
+                $ui->addButton($item[1]);
             }
         }
 
-        if ($this->hasRemains($name, $limit, (array) $data)) {
+        if ($this->hasRemains($name, $limit, (array)$data)) {
             $ui->addButton(Utils::Translate('ui.button.next'));
         }
 
         $ui->addButton(Utils::Translate('ui.button.close'));
         $ui->sendToPlayer($player);
+    }
+
+
+    private function displayErrorMessage(Player $player, string $errorMessage): void
+    {
+        $player->sendMessage(Utils::Translate($errorMessage));
     }
 
     /**
@@ -291,6 +300,19 @@ class UI
         $ui->sendToPlayer($player);
     }
 
+    private function hasRemains(string $name, int $limit, array $data): bool
+    {
+        $pageContainer = $this->getPageContainer($name);
+        $start = $pageContainer['page'] * $limit;
+        $stop = $start + $limit;
+        return $stop < count($data);
+    }
+
+    private function getPageContainer(string $name): array
+    {
+        return $this->pageContainer[$name] ?? ['page' => 0, 'remains' => false];
+    }
+
     /**
      * Settings page where the player can change few personal settings.
      * @param Player $player The player that receives the UI.
@@ -318,23 +340,5 @@ class UI
                 Utils::Translate('ui.settings.dropdown.all.friends')
             ], $friend->getJoinSetting());
         $ui->sendToPlayer($player);
-    }
-
-    private function displayErrorMessage(Player $player, string $errorMessage): void
-    {
-        $player->sendMessage(Utils::Translate($errorMessage));
-    }
-
-    private function getPageContainer(string $name): array
-    {
-        return $this->pageContainer[$name] ?? ['page' => 0, 'remains' => false];
-    }
-
-    private function hasRemains(string $name, int $limit, array $data): bool
-    {
-        $pageContainer = $this->getPageContainer($name);
-        $start = $pageContainer['page'] * $limit;
-        $stop = $start + $limit;
-        return $stop < count($data);
     }
 }

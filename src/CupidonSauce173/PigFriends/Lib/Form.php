@@ -60,7 +60,7 @@ abstract class Form implements IForm
         return $this->callable;
     }
 
-    function jsonSerialize() : array
+    function jsonSerialize(): array
     {
         return $this->data;
     }

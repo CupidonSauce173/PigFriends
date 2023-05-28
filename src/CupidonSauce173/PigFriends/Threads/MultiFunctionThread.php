@@ -115,10 +115,10 @@ class MultiFunctionThread extends Thread
             $inputs = $order->getInputs();
             var_dump($inputs);
             if (isset($this->protectionContainer['orderTypes'][$order->getCall()])) {
-                if($inputs[0] instanceof UuidInterface) {
+                if ($inputs[0] instanceof UuidInterface) {
                     $uuid = $inputs[0]->__toString();
                 } elseif ($inputs[0] instanceof Friend) {
-                        $uuid = $inputs[0]->getPlayer();
+                    $uuid = $inputs[0]->getPlayer();
                 } else {
                     $uuid = $inputs['uuid'];
                 }

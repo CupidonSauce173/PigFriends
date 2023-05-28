@@ -5,7 +5,6 @@ namespace CupidonSauce173\PigFriends\Entities;
 
 use CupidonSauce173\PigFriends\FriendsLoader;
 use Volatile;
-use function array_search;
 
 class Friend extends Volatile
 {
@@ -33,7 +32,8 @@ class Friend extends Volatile
      */
     function isFavorite(string $friend): bool
     {
-        return in_array($friend, (array) $this->favorites);
+        if($this->findArrayInDataArray($this->favorites, $friend) == null) return false;
+        return true;
     }
 
     /**
@@ -177,82 +177,76 @@ class Friend extends Volatile
     }
 
     /**
-     * Method to add a friend as favorite.
-     * @param string $target Friend to set as favorite.
+     * Method to add a friend as a favorite.
+     * @param string $target Friend to set as a favorite.
      * @return bool
      */
     function addFavorite(string $target): bool
     {
         $friendData = $this->findArrayInDataArray($this->friends, $target);
-        if($friendData == null) return false;
-        $this->favorites[] = [$friendData[0], $friendData[1]];
+        if ($friendData === null) {
+            return false;
+        }
+        $this->favorites[] = $friendData;
         return true;
     }
 
     /**
      * Method to remove a friend from the favorites.
-     * @param string $targetUuid Friend to remove from the favorites
+     * @param string $targetUuid Friend to remove from the favorites.
      * @return bool
      */
     function removeFavorite(string $targetUuid): bool
     {
-        $favoriteData = $this->findArrayInDataArray($this->favorites, $targetUuid);
-        if($favoriteData == null) return false;
-        unset($this->favorites[$favoriteData]);
-        return false;
+        return $this->unsetArrayElementByUsername($this->favorites, $targetUuid);
     }
 
     /**
      * Method to add a player to the blocked list.
-     * @param string $targetUuid The player uuid to block
+     * @param string $targetUuid The player UUID to block.
      * @param string $targetUsername The player username to block.
      * @return bool
      */
     function blockPlayer(string $targetUuid, string $targetUsername): bool
     {
         $blockedData = $this->findArrayInDataArray($this->blocked, $targetUuid);
-        if($blockedData != null) return false;
+        if ($blockedData !== null) return false;
         $this->blocked[] = [$targetUuid, $targetUsername];
         return true;
     }
 
     /**
      * Method to remove a player from the blocked list.
-     * @param string $targetUuid The player uuid to unblock.
+     * @param string $targetUuid The player UUID to unblock.
      * @return bool
      */
     function unblockPlayer(string $targetUuid): bool
     {
-        $blockedData = $this->findArrayInDataArray($this->blocked, $targetUuid);
-        if($blockedData == null) return false;
-        unset($this->blocked[$blockedData]);
-        return true;
+        return $this->unsetArrayElementByUuid($this->blocked, $targetUuid);
     }
 
     /**
      * Method to add a player to a friend list.
-     * @param string $targetUuid The player uuid to add.
+     * @param string $targetUuid The player UUID to add.
      * @param string $friendUsername The player username.
      * @return bool
      */
     function addFriend(string $targetUuid, string $friendUsername): bool
     {
-        if (isset($this->friends[$targetUuid])) return false;
+        $friendData = $this->findArrayInDataArray($this->friends, $targetUuid);
+        if ($friendData !== null) return false;
         $this->friends[] = [$targetUuid, $friendUsername];
         return true;
     }
 
     /**
      * Method to remove a friend from a friend list.
-     * @param string $targetUuid The target uuid to remove
+     * @param string $targetUuid The target UUID to remove.
      * @return bool
      */
     function removeFriend(string $targetUuid): bool
     {
-        $friendData = $this->findArrayInDataArray($this->friends, $targetUuid);
-        if($friendData == null) return false;
-        unset($this->friends[$friendData]);
-        return true;
+        return $this->unsetArrayElementByUuid($this->friends, $targetUuid);
     }
 
     /**
@@ -272,11 +266,35 @@ class Friend extends Volatile
         return $requests;
     }
 
+
     private function findArrayInDataArray($data, $target)
     {
-        foreach((array) $data as $subArray) {
-            if(in_array($target, (array) $subArray)) return $subArray;
+        foreach ((array)$data as $subArray) {
+            if (in_array($target, (array)$subArray)) return $subArray;
         }
         return null;
     }
+
+    private function unsetArrayElementByUuid(&$volatileArray, $uuidToRemove): bool
+    {
+        foreach ($volatileArray as $key => $object) {
+            if ($object[0] === $uuidToRemove) {
+                unset($volatileArray[$key]);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function unsetArrayElementByUsername(&$volatileArray, $usernameToRemove): bool
+    {
+        foreach ($volatileArray as $key => $object) {
+            if ($object[1] === $usernameToRemove) {
+                unset($volatileArray[$key]);
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
